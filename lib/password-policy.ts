@@ -8,22 +8,22 @@ type PasswordRule = {
 export const passwordRules: readonly PasswordRule[] = [
   {
     id: "length",
-    label: "At least 8 characters",
+    label: "8+ characters",
     test: (password) => password.length >= 8,
   },
   {
     id: "uppercase",
-    label: "One uppercase letter",
+    label: "1 uppercase",
     test: (password) => /[A-Z]/.test(password),
   },
   {
     id: "number",
-    label: "One number",
+    label: "1 number",
     test: (password) => /[0-9]/.test(password),
   },
   {
     id: "special",
-    label: "One special character (e.g. @ # !)",
+    label: "1 symbol (e.g. @ # !)",
     test: (password) => /[^A-Za-z0-9\s]/.test(password),
   },
 ]

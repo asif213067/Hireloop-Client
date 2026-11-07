@@ -1,5 +1,3 @@
-import { CheckIcon, CircleIcon } from "lucide-react"
-
 import { passwordRules } from "@/lib/password-policy"
 import { cn } from "@/lib/utils"
 
@@ -8,31 +6,30 @@ type PasswordRulesProps = {
   password: string
 }
 
-// Live checklist: each rule turns on as the user types
+// One-sentence hint: each requirement turns bright and bold once it is met
 export function PasswordRules({ id, password }: PasswordRulesProps) {
   return (
-    <ul id={id} className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2">
-      {passwordRules.map((rule) => {
+    <p id={id} className="mt-1.5 text-xs text-muted-foreground">
+      Use{" "}
+      {passwordRules.map((rule, index) => {
         const met = rule.test(password)
+        const isLast = index === passwordRules.length - 1
 
         return (
-          <li
-            key={rule.id}
-            className={cn(
-              "flex items-center gap-1.5 transition-colors",
-              met ? "text-foreground" : "text-muted-foreground"
-            )}
-          >
-            {met ? (
-              <CheckIcon aria-hidden className="size-3.5 text-primary" />
-            ) : (
-              <CircleIcon aria-hidden className="size-3.5" />
-            )}
-            <span>{rule.label}</span>
-            <span className="sr-only">{met ? "(met)" : "(not met)"}</span>
-          </li>
+          <span key={rule.id}>
+            <span
+              className={cn(
+                "transition-colors",
+                met && "font-semibold text-foreground"
+              )}
+            >
+              {rule.label}
+            </span>
+            <span className="sr-only">{met ? " (met)" : " (not met)"}</span>
+            {isLast ? "." : ", "}
+          </span>
         )
       })}
-    </ul>
+    </p>
   )
 }
