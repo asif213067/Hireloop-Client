@@ -19,3 +19,8 @@ export function isPublicSignupRole(value: unknown): value is PublicSignupRole {
     (PUBLIC_SIGNUP_ROLES as readonly string[]).includes(value)
   )
 }
+
+// Profile page route per role: recruiter is the only special case
+export function getProfileHref(role: unknown): string {
+  return role === "recruiter" ? "/recruiter/profile" : "/seeker/profile"
+}
