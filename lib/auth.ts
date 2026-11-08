@@ -19,6 +19,16 @@ export const auth = betterAuth({
     minPasswordLength: 8,
   },
 
+  // for role based signin or signup
+  user: {
+    additionalFields: {
+      role: {
+        type: ["seeker", "recruiter", "admin"],
+        input: false,
+      },
+    },
+  },
+
   // Server-side password policy: the browser check can be bypassed, this cannot
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
