@@ -49,7 +49,6 @@ export const auth = betterAuth({
     },
   },
 
-  // Server-side password policy: the browser check can be bypassed, this cannot
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       // Sign up: password policy + role whitelist
