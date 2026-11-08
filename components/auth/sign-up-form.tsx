@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation"
 import { AuthCard, OrDivider } from "@/components/auth/auth-card"
 import { AuthField, PasswordField } from "@/components/auth/auth-field"
 import { GoogleButton } from "@/components/auth/google-button"
+import { RolePicker } from "@/components/auth/role-picker"
 import { Button } from "@/components/ui/button"
 import { authClient } from "@/lib/auth-client"
+import type { PublicSignupRole } from "@/lib/roles"
 
 import { PasswordRules } from "@/components/auth/password-rules"
 import { isPasswordValid } from "@/lib/password-policy"
@@ -18,24 +20,27 @@ export function SignUpForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [role, setRole] = useState<PublicSignupRole>("seeker")
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
-    setPending(true)
 
     if (!isPasswordValid(password)) {
       setError("Please meet all the password requirements.")
       return
     }
 
+    setPending(true)
+
     // Creates the account and signs the user in
     const { error: signUpError } = await authClient.signUp.email({
       name: name.trim(),
       email,
       password,
+      role,
     })
 
     if (signUpError) {
@@ -80,6 +85,10 @@ export function SignUpForm() {
           value={name}
           onChange={setName}
         />
+
+        {/* Google sign-ups can't carry a role, so ask here instead */}
+        <RolePicker value={role} onChange={setRole} disabled={pending} />
+
         <AuthField
           id="email"
           label="Email"
