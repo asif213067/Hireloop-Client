@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next"
 import { Manrope, JetBrains_Mono } from "next/font/google"
 
 import "./globals.css"
-import { Navbar } from "@/components/shared/navbar"
 import { cn } from "@/lib/utils"
 
 const manrope = Manrope({
@@ -113,8 +112,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <Navbar />
-        <main id="main">{children}</main>
+        {children}
       </body>
     </html>
   )
