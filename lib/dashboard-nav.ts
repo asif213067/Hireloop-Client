@@ -5,6 +5,7 @@ import {
   Building2Icon,
   BookmarkIcon,
   CircleHelpIcon,
+  CirclePlusIcon,
   CreditCardIcon,
   FileTextIcon,
   LayoutDashboardIcon,
@@ -115,10 +116,16 @@ export function getDashboardNav(role: Role): DashboardNav {
       ...(role === "recruiter"
         ? [
             {
+              label: "Add Job",
+              href: "/dashboard/recruiter/jobs/new",
+              icon: CirclePlusIcon,
+              enabled: true,
+            },
+            {
               label: "Manage Jobs",
               href: "/dashboard/recruiter/jobs",
               icon: BriefcaseIcon,
-              enabled: false,
+              enabled: true,
             },
             {
               label: "Applications",

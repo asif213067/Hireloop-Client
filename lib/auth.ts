@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth"
 import { createAuthMiddleware, APIError } from "better-auth/api"
 import { MongoClient } from "mongodb"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
+import { jwt } from "better-auth/plugins/jwt"
 
 import { isPasswordValid } from "./password-policy"
 import { isPublicSignupRole } from "./roles"
@@ -19,6 +20,8 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
   },
+
+  plugins: [jwt()],
 
   // Role-based accounts: stored on the user, default seeker
   user: {
