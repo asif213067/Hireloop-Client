@@ -1,22 +1,37 @@
 "use client"
 
-import { BriefcaseIcon, MapPinIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { MapPinIcon, UsersIcon } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 
+import { DeleteJobDialog } from "@/components/dashboard/recruiter/delete-job-dialog"
+import { JobActions } from "@/components/dashboard/recruiter/job-actions"
+import { buttonVariants } from "@/components/ui/button"
 import { apiRequest } from "@/lib/api"
 import {
-  formatDate,
+  formatApplicants,
   formatCompensation,
+  formatDate,
   getJobStatus,
   getJobTypeLabel,
   isJobResponse,
   type JobResponse,
 } from "@/lib/jobs"
-import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const LIST_PATH = "/dashboard/recruiter/jobs"
+const headClass =
+  "px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+
+// Table headers in order; the Actions header is added separately on the right
+const COLUMNS = [
+  "Job Title & Dept",
+  "Company & Location",
+  "Type",
+  "Compensation",
+  "Applicants",
+  "Status",
+  "Deadline",
+]
 
 // Pill for Active/Expired with the deadline-based status
 function StatusPill({ status }: { status: "active" | "expired" }) {
@@ -54,56 +69,40 @@ function LocationLine({ job }: { job: JobResponse }) {
   )
 }
 
-// Title tile + name + category used in the table row
-function JobTitleCell({ job }: { job: JobResponse }) {
+// Applicants count with the people icon
+function ApplicantsText({ count }: { count: number }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary">
-        <BriefcaseIcon aria-hidden className="size-4 text-secondary-foreground" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-sm font-medium text-foreground">
-          {job.title}
-        </span>
-        <span className="block text-xs text-primary">{job.category}</span>
-      </span>
-    </div>
+    <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+      <UsersIcon aria-hidden className="size-4 text-primary" />
+      {formatApplicants(count)}
+    </span>
   )
 }
 
-// Update link and delete button, shared by the table and the cards
-function RowActions({
-  job,
-  pending,
-  onDelete,
+// Title and category used in the table row
+function JobTitleCell({ job }: { job: JobResponse }) {
+  return (
+    <>
+      <span className="block text-sm font-medium text-foreground">
+        {job.title}
+      </span>
+      <span className="block text-xs text-primary">{job.category}</span>
+    </>
+  )
+}
+
+// Small label above a value, used inside the mobile card
+function DetailItem({
+  label,
+  children,
 }: {
-  job: JobResponse
-  pending: boolean
-  onDelete: (job: JobResponse) => void
+  label: string
+  children: ReactNode
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <Link
-        href={`${LIST_PATH}/${job.id}/edit`}
-        className={cn(
-          buttonVariants({ variant: "outline", size: "sm" }),
-          "inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        )}
-      >
-        <PencilIcon aria-hidden className="size-4" />
-        Update
-        <span className="sr-only">{job.title}</span>
-      </Link>
-      <button
-        type="button"
-        onClick={() => onDelete(job)}
-        disabled={pending}
-        aria-label={`Delete ${job.title}`}
-        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-destructive focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-      >
-        <Trash2Icon aria-hidden className="size-4" />
-        <span className="sr-only">Delete</span>
-      </button>
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm text-foreground">{children}</dd>
     </div>
   )
 }
@@ -128,9 +127,10 @@ async function loadJobs(): Promise<{ jobs: JobResponse[] } | null> {
 // Recruiter's own job posts with update and delete actions
 export function JobsList() {
   const [jobs, setJobs] = useState<JobResponse[]>([])
-  const [loadState, setLoadState] = useState<"loading" | "error" | "ready">("loading")
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [loadState, setLoadState] = useState<"loading" | "error" | "ready">(
+    "loading"
+  )
+  const [jobToDelete, setJobToDelete] = useState<JobResponse | null>(null)
 
   function applyJobs(result: { jobs: JobResponse[] } | null) {
     if (result === null) {
@@ -156,18 +156,10 @@ export function JobsList() {
     void loadJobs().then(applyJobs)
   }
 
-  // Confirm, delete, then drop the row from the list
-  async function handleDelete(job: JobResponse) {
-    if (!window.confirm("Delete this job? This can't be undone.")) return
-    setDeletingId(job.id)
-    setDeleteError(null)
-    const { status } = await apiRequest(`/api/jobs/${job.id}`, { method: "DELETE" })
-    if (status === 204) {
-      setJobs((current) => current.filter((item) => item.id !== job.id))
-    } else {
-      setDeleteError("Could not delete the job. Please try again.")
-    }
-    setDeletingId(null)
+  // The dialog already deleted the job on the server; drop it from the list
+  function handleDeleted(id: string) {
+    setJobs((current) => current.filter((item) => item.id !== id))
+    setJobToDelete(null)
   }
 
   if (loadState === "loading") {
@@ -219,42 +211,48 @@ export function JobsList() {
 
   return (
     <div className="mt-6">
-      {deleteError ? (
-        <p
-          role="alert"
-          className="mb-4 text-sm text-destructive"
-        >
-          {deleteError}
-        </p>
-      ) : null}
-
       {/* Cards below xl */}
       <div className="space-y-4 xl:hidden">
         {jobs.map((job) => (
-          <article key={job.id} className="rounded-xl border border-border bg-card p-4">
+          <article
+            key={job.id}
+            className="rounded-xl border border-border bg-card p-4"
+          >
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-sm font-medium text-foreground">{job.title}</h2>
+              <div className="min-w-0">
+                <h2 className="text-base leading-snug font-semibold break-words text-foreground">
+                  {job.title}
+                </h2>
+                <p className="mt-0.5 text-xs text-primary">{job.category}</p>
+              </div>
               <StatusPill status={getJobStatus(job.deadline)} />
             </div>
+
             <div className="mt-2 space-y-1">
-              <p className="text-sm text-muted-foreground">{job.companyName}</p>
+              <p className="text-sm text-foreground/80">{job.companyName}</p>
               <LocationLine job={job} />
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <TypePill label={getJobTypeLabel(job.jobType)} />
-              <span className="text-sm text-muted-foreground">
+
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+              <DetailItem label="Type">
+                <TypePill label={getJobTypeLabel(job.jobType)} />
+              </DetailItem>
+              <DetailItem label="Compensation">
                 {formatCompensation(job)}
-              </span>
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Deadline {formatDate(job.deadline)} · Posted {formatDate(job.createdAt)}
-            </p>
-            <div className="mt-4">
-              <RowActions
-                job={job}
-                pending={deletingId === job.id}
-                onDelete={handleDelete}
-              />
+              </DetailItem>
+              <DetailItem label="Applicants">
+                <ApplicantsText count={job.applicantsCount} />
+              </DetailItem>
+              <DetailItem label="Deadline">
+                {formatDate(job.deadline)}
+              </DetailItem>
+            </dl>
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground">
+                Posted {formatDate(job.createdAt)}
+              </p>
+              <JobActions job={job} onDelete={setJobToDelete} />
             </div>
           </article>
         ))}
@@ -266,25 +264,12 @@ export function JobsList() {
           <caption className="sr-only">Your job posts</caption>
           <thead>
             <tr className="border-b border-border">
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Job
-              </th>
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Company
-              </th>
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Type
-              </th>
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Compensation
-              </th>
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Status
-              </th>
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Deadline
-              </th>
-              <th scope="col" className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {COLUMNS.map((column) => (
+                <th key={column} scope="col" className={headClass}>
+                  {column}
+                </th>
+              ))}
+              <th scope="col" className={cn(headClass, "text-right")}>
                 Actions
               </th>
             </tr>
@@ -296,7 +281,9 @@ export function JobsList() {
                   <JobTitleCell job={job} />
                 </td>
                 <td className="px-4 py-3">
-                  <span className="block text-sm text-foreground">{job.companyName}</span>
+                  <span className="block text-sm text-foreground">
+                    {job.companyName}
+                  </span>
                   <LocationLine job={job} />
                 </td>
                 <td className="px-4 py-3">
@@ -306,26 +293,39 @@ export function JobsList() {
                   {formatCompensation(job)}
                 </td>
                 <td className="px-4 py-3">
+                  <ApplicantsText count={job.applicantsCount} />
+                </td>
+                <td className="px-4 py-3">
                   <StatusPill status={getJobStatus(job.deadline)} />
                 </td>
                 <td className="px-4 py-3">
-                  <span className="block text-foreground">{formatDate(job.deadline)}</span>
+                  <span className="block text-foreground">
+                    {formatDate(job.deadline)}
+                  </span>
                   <span className="block text-xs text-muted-foreground">
                     Posted {formatDate(job.createdAt)}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <RowActions
-                    job={job}
-                    pending={deletingId === job.id}
-                    onDelete={handleDelete}
-                  />
+                  <div className="flex justify-end">
+                    <JobActions job={job} onDelete={setJobToDelete} />
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* One dialog for the whole list; the key resets it for each job */}
+      {jobToDelete ? (
+        <DeleteJobDialog
+          key={jobToDelete.id}
+          job={jobToDelete}
+          onClose={() => setJobToDelete(null)}
+          onDeleted={handleDeleted}
+        />
+      ) : null}
     </div>
   )
 }

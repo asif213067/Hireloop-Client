@@ -73,7 +73,8 @@ export type JobPayload = {
 }
 
 // Job shape returned by the API; id is a string, nullables are null
-export type JobResponse = {  id: string
+export type JobResponse = {
+  id: string
   title: string
   companyName: string
   category: JobCategory
@@ -87,6 +88,7 @@ export type JobResponse = {  id: string
   responsibilities: string
   requirements: string
   status: string
+  applicantsCount: number
   createdAt: string
   updatedAt: string
 }
@@ -102,11 +104,19 @@ export function localToday(): string {
 // A calendar date in YYYY-MM-DD form
 function isIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const [year, month, day] = value.split("-").map(Number) as [number, number, number]
+  const [year, month, day] = value.split("-").map(Number) as [
+    number,
+    number,
+    number,
+  ]
   if (month < 1 || month > 12) return false
   if (day < 1 || day > 31) return false
   const date = new Date(year, month - 1, day)
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  )
 }
 
 // A number when the field is filled, undefined when left empty, NaN when invalid
@@ -161,11 +171,17 @@ export function validateJob(values: JobFormValues): Record<string, string> {
     errors.salaryFrequency = "Choose a frequency for the salary."
   }
 
-  if (salaryMin !== undefined && (Number.isNaN(salaryMin) || salaryMin < 0 || salaryMin > 10_000_000)) {
+  if (
+    salaryMin !== undefined &&
+    (Number.isNaN(salaryMin) || salaryMin < 0 || salaryMin > 10_000_000)
+  ) {
     errors.salaryMin = "Salary must be between 0 and 10,000,000."
   }
 
-  if (salaryMax !== undefined && (Number.isNaN(salaryMax) || salaryMax < 0 || salaryMax > 10_000_000)) {
+  if (
+    salaryMax !== undefined &&
+    (Number.isNaN(salaryMax) || salaryMax < 0 || salaryMax > 10_000_000)
+  ) {
     errors.salaryMax = "Salary must be between 0 and 10,000,000."
   }
 
@@ -220,7 +236,10 @@ export function formatCompensation(job: JobResponse): string {
     month: "/ mo",
     year: "/ yr",
   }
-  const suffix = job.salaryFrequency === null ? "" : ` ${shortFrequency[job.salaryFrequency]}`
+  const suffix =
+    job.salaryFrequency === null
+      ? ""
+      : ` ${shortFrequency[job.salaryFrequency]}`
 
   return `${range}${suffix}`
 }
@@ -232,6 +251,11 @@ export function formatDate(iso: string): string {
     day: "numeric",
     year: "numeric",
   }).format(new Date(iso))
+}
+
+// "0 applicants", "1 applicant", "12 applicants"
+export function formatApplicants(count: number): string {
+  return count === 1 ? "1 applicant" : `${count} applicants`
 }
 
 // Label for a job type value, falling back to the raw value
@@ -256,11 +280,14 @@ export function isJobResponse(value: unknown): value is JobResponse {
     (typeof job.salaryMin === "number" || job.salaryMin === null) &&
     (typeof job.salaryMax === "number" || job.salaryMax === null) &&
     ((typeof job.salaryFrequency === "string" &&
-      FREQUENCIES.some((frequency) => frequency.value === job.salaryFrequency)) ||
+      FREQUENCIES.some(
+        (frequency) => frequency.value === job.salaryFrequency
+      )) ||
       job.salaryFrequency === null) &&
     typeof job.responsibilities === "string" &&
     typeof job.requirements === "string" &&
     typeof job.status === "string" &&
+    typeof job.applicantsCount === "number" &&
     typeof job.createdAt === "string" &&
     typeof job.updatedAt === "string"
   )

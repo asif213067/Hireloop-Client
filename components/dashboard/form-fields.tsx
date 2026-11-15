@@ -8,7 +8,7 @@ import { cn } from "cn"
 
 // Shared sizing: inputs and selects sit at 44px minimum for touch targets
 const controlClass =
-  "h-11 w-full rounded-lg border border-border bg-input/30 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50"
+  "h-11 w-full rounded-lg border border-border bg-input/30 px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50"
 const labelClass = "text-sm font-medium text-foreground"
 const requiredClass = "text-xs font-normal text-muted-foreground"
 const errorClass = "mt-1 text-xs text-destructive"

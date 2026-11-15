@@ -423,7 +423,10 @@ export function JobForm({ jobId }: { jobId?: string }) {
           )}
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             {editing ? (
-              <Link href="/dashboard/recruiter/jobs" className={linkButtonClass}>
+              <Link
+                href="/dashboard/recruiter/jobs"
+                className={linkButtonClass}
+              >
                 Back to jobs
               </Link>
             ) : (
@@ -440,7 +443,10 @@ export function JobForm({ jobId }: { jobId?: string }) {
                 <Link href="/dashboard/recruiter" className={linkButtonClass}>
                   Back to dashboard
                 </Link>
-                <Link href="/dashboard/recruiter/jobs" className={linkButtonClass}>
+                <Link
+                  href="/dashboard/recruiter/jobs"
+                  className={linkButtonClass}
+                >
                   View my jobs
                 </Link>
               </>
@@ -453,7 +459,9 @@ export function JobForm({ jobId }: { jobId?: string }) {
         </p>
       ) : loadState === "notFound" ? (
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-          <h2 className="text-lg font-semibold text-foreground">Job not found</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Job not found
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             This listing may have been removed.
           </p>
@@ -617,7 +625,13 @@ export function JobForm({ jobId }: { jobId?: string }) {
             size="lg"
             className="h-11 w-full sm:hidden"
           >
-            {submitting ? (editing ? "Saving..." : "Publishing...") : editing ? "Save Changes" : "Publish Job"}
+            {submitting
+              ? editing
+                ? "Saving..."
+                : "Publishing..."
+              : editing
+                ? "Save Changes"
+                : "Publish Job"}
             <ArrowRightIcon
               data-icon="inline-end"
               aria-hidden
