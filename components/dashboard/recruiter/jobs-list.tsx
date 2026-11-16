@@ -220,7 +220,7 @@ export function JobsList() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="text-base leading-snug font-semibold break-words text-foreground">
+                <h2 className="text-base leading-snug font-semibold wrap-break-word text-foreground">
                   {job.title}
                 </h2>
                 <p className="mt-0.5 text-xs text-primary">{job.category}</p>

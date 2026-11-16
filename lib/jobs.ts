@@ -11,6 +11,7 @@ export const CATEGORIES = [
   "Engineering & Tech",
   "Design",
   "Product",
+  "Product Management",
   "Marketing",
   "Sales",
   "Data & Analytics",
@@ -219,7 +220,9 @@ function formatCompact(value: number): string {
 }
 
 // "€25 – €40 / hr" style text for a job's salary range
-export function formatCompensation(job: JobResponse): string {
+export function formatCompensation(
+  job: Pick<JobResponse, "salaryMin" | "salaryMax" | "salaryFrequency">
+): string {
   if (job.salaryMin === null && job.salaryMax === null) return "Not specified"
 
   const parts: string[] = []
@@ -261,6 +264,103 @@ export function formatApplicants(count: number): string {
 // Label for a job type value, falling back to the raw value
 export function getJobTypeLabel(value: string): string {
   return JOB_TYPES.find((type) => type.value === value)?.label ?? value
+}
+
+// Public job shape: the fields an anonymous visitor may see, no status or counters
+export type PublicJob = {
+  id: string
+  title: string
+  companyName: string
+  category: JobCategory
+  jobType: JobType
+  isRemote: boolean
+  location: string | null
+  deadline: string
+  salaryMin: number | null
+  salaryMax: number | null
+  salaryFrequency: SalaryFrequency | null
+  createdAt: string
+}
+
+// Detail endpoint returns the same job plus the long-form sections
+export type PublicJobDetail = PublicJob & {
+  responsibilities: string
+  requirements: string
+}
+
+// Counts of open jobs per type, used by the public filter panel
+export type PublicJobTypeCounts = Record<JobType, number>
+
+// Response envelope of the public list endpoint
+export type PublicJobsResponse = {
+  jobs: PublicJob[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  typeCounts: PublicJobTypeCounts
+}
+
+// Type guard for a public job from the API, in the style of isJobResponse
+export function isPublicJob(value: unknown): value is PublicJob {
+  if (typeof value !== "object" || value === null) return false
+  const job = value as Record<string, unknown>
+
+  return (
+    typeof job.id === "string" &&
+    typeof job.title === "string" &&
+    typeof job.companyName === "string" &&
+    CATEGORIES.some((category) => category === job.category) &&
+    JOB_TYPES.some((type) => type.value === job.jobType) &&
+    typeof job.isRemote === "boolean" &&
+    (typeof job.location === "string" || job.location === null) &&
+    typeof job.deadline === "string" &&
+    (typeof job.salaryMin === "number" || job.salaryMin === null) &&
+    (typeof job.salaryMax === "number" || job.salaryMax === null) &&
+    ((typeof job.salaryFrequency === "string" &&
+      FREQUENCIES.some(
+        (frequency) => frequency.value === job.salaryFrequency
+      )) ||
+      job.salaryFrequency === null) &&
+    typeof job.createdAt === "string"
+  )
+}
+
+// Type guard for the detail payload, which adds the long-form sections
+export function isPublicJobDetail(value: unknown): value is PublicJobDetail {
+  if (!isPublicJob(value)) return false
+  const job = value as Record<string, unknown>
+
+  return (
+    typeof job.responsibilities === "string" &&
+    typeof job.requirements === "string"
+  )
+}
+
+// Every type key present with a number count
+function isPublicJobTypeCounts(value: unknown): value is PublicJobTypeCounts {
+  if (typeof value !== "object" || value === null) return false
+  const counts = value as Record<string, unknown>
+
+  return JOB_TYPES.every((type) => typeof counts[type.value] === "number")
+}
+
+// Type guard for the list response envelope
+export function isPublicJobsResponse(
+  value: unknown
+): value is PublicJobsResponse {
+  if (typeof value !== "object" || value === null) return false
+  const data = value as Record<string, unknown>
+
+  return (
+    Array.isArray(data.jobs) &&
+    data.jobs.every(isPublicJob) &&
+    typeof data.total === "number" &&
+    typeof data.page === "number" &&
+    typeof data.pageSize === "number" &&
+    typeof data.totalPages === "number" &&
+    isPublicJobTypeCounts(data.typeCounts)
+  )
 }
 
 // Type guard for a job from the API, including the enum values
