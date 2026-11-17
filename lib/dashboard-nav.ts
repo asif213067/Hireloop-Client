@@ -139,9 +139,10 @@ export function getDashboardNav(role: Role): DashboardNav {
         ? [
             {
               label: "Jobs",
-              href: "/dashboard/seeker/jobs",
+              // href: "/dashboard/seeker/jobs",
+              href: "/jobs",
               icon: BriefcaseIcon,
-              enabled: false,
+              enabled: true,
             },
             {
               label: "Saved Jobs",

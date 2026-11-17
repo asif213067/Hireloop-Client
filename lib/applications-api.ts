@@ -189,3 +189,59 @@ export async function applyToJob(jobId: string): Promise<ApplyResult> {
     return error instanceof NotSignedInError ? "not-signed-in" : "error"
   }
 }
+
+export type ActivityItem = {
+  id: string
+  jobId: string
+  jobTitle: string
+  companyName: string
+  status: ApplicationStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export type SeekerSummary = {
+  stats: {
+    savedJobs: number
+    applications: number
+    interviews: number
+    offers: number
+  }
+  recent: ActivityItem[]
+}
+
+// Checks the server data before the page trusts it
+function isSeekerSummary(value: unknown): value is SeekerSummary {
+  if (!isRecord(value) || !isRecord(value.stats)) return false
+  if (!Array.isArray(value.recent)) return false
+
+  const stats = value.stats
+  const statsOk =
+    typeof stats.savedJobs === "number" &&
+    typeof stats.applications === "number" &&
+    typeof stats.interviews === "number" &&
+    typeof stats.offers === "number"
+  if (!statsOk) return false
+
+  return value.recent.every(
+    (item: unknown) =>
+      isRecord(item) &&
+      typeof item.id === "string" &&
+      typeof item.jobTitle === "string" &&
+      typeof item.companyName === "string" &&
+      typeof item.status === "string" &&
+      typeof item.updatedAt === "string"
+  )
+}
+
+// Never throws: returns null on any failure or wrong shape
+export async function fetchSeekerSummary(): Promise<SeekerSummary | null> {
+  try {
+    const res = await authFetch("/api/applications/summary")
+    if (!res.ok) return null
+    const data: unknown = await res.json()
+    return isSeekerSummary(data) ? data : null
+  } catch {
+    return null
+  }
+}
