@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { formatCompensation, getJobTypeLabel, type PublicJob } from "@/lib/jobs"
+import { SaveButton } from "@/components/jobs/save-button"
 
 // "New" while created less than 3 days ago; NaN on a bad date means not new
 function isNewJob(createdAt: string): boolean {
@@ -8,7 +9,13 @@ function isNewJob(createdAt: string): boolean {
 }
 
 // One card in the public jobs list; the title link covers the whole card
-export function JobCard({ job }: { job: PublicJob }) {
+export function JobCard({
+  job,
+  initialSaved,
+}: {
+  job: PublicJob
+  initialSaved?: boolean
+}) {
   const isNew = isNewJob(job.createdAt)
   const hasSalary = job.salaryMin !== null || job.salaryMax !== null
 
@@ -21,7 +28,11 @@ export function JobCard({ job }: { job: PublicJob }) {
 
   return (
     <article className="relative rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40 sm:p-5">
-      <div className="flex items-start gap-3 sm:gap-4">
+      {/* Save toggle sits outside the card link as an absolute sibling */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+        <SaveButton jobId={job.id} initialSaved={initialSaved} />
+      </div>
+      <div className="flex items-start gap-3 pr-14 sm:gap-4 sm:pr-16">
         <div
           aria-hidden
           className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-secondary text-lg font-semibold text-secondary-foreground"

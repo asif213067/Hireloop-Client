@@ -12,5 +12,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - components/dashboard/ (root): only components used by two or more roles (shell, sidebar, topbar, sidebar state, footer rows, generic form fields).
 - components/dashboard/<role>/ (recruiter, seeker, admin): components used by that role only. Create a role folder only when its first file exists.
 - components/jobs/: job UI shared by the public site and several dashboards (future cards, badges).
+- components/dashboard/settings/: settings components shared by the seeker and recruiter settings pages.
 - Routes stay under app/dashboard/<role>/ and mirror the URL. Shared logic, types and validation stay in lib/.
 - Never move a file out of its role folder or delete a role folder unless I explicitly ask. If a task prompt names a different path for a role-only component, ask before following it.

@@ -147,13 +147,13 @@ export function getDashboardNav(role: Role): DashboardNav {
               label: "Saved Jobs",
               href: "/dashboard/seeker/saved-jobs",
               icon: BookmarkIcon,
-              enabled: false,
+              enabled: true,
             },
             {
               label: "Applications",
               href: "/dashboard/seeker/applications",
               icon: FileTextIcon,
-              enabled: false,
+              enabled: true,
             },
             {
               label: "Billing",
@@ -167,7 +167,8 @@ export function getDashboardNav(role: Role): DashboardNav {
         label: "Settings",
         href: `/dashboard/${role}/settings`,
         icon: SettingsIcon,
-        enabled: false,
+        // Admin settings are not built yet
+        enabled: role !== "admin",
       },
     ],
   }

@@ -76,11 +76,40 @@ export const auth = betterAuth({
         return
       }
 
+      // Password change: same policy as sign-up
+      if (ctx.path === "/change-password") {
+        const newPassword: unknown = ctx.body?.newPassword
+
+        if (typeof newPassword !== "string" || !isPasswordValid(newPassword)) {
+          throw new APIError("BAD_REQUEST", {
+            message:
+              "Password must be at least 8 characters and include an uppercase letter, a number and a special character.",
+          })
+        }
+
+        return
+      }
+
       // Profile update: users must never change their own role
-      if (ctx.path === "/update-user" && ctx.body?.role !== undefined) {
-        throw new APIError("FORBIDDEN", {
-          message: "Your account type can't be changed here.",
-        })
+      if (ctx.path === "/update-user") {
+        if (ctx.body?.role !== undefined) {
+          throw new APIError("FORBIDDEN", {
+            message: "Your account type can't be changed here.",
+          })
+        }
+
+        // Name stays honest: 2 to 80 characters
+        const name: unknown = ctx.body?.name
+        const nameLength = typeof name === "string" ? name.trim().length : 0
+
+        if (
+          name !== undefined &&
+          (typeof name !== "string" || nameLength < 2 || nameLength > 80)
+        ) {
+          throw new APIError("BAD_REQUEST", {
+            message: "Name must be 2 to 80 characters.",
+          })
+        }
       }
     }),
   },

@@ -52,8 +52,8 @@ export function DeleteJobDialog({
     setPending(false)
   }
 
-  const applications =
-    job.applicantsCount === 1 ? "application" : "applications"
+  // const applications =
+  //   job.applicantsCount === 1 ? "application" : "applications"
 
   return (
     <Dialog open onOpenChange={handleOpenChange}>
@@ -64,7 +64,7 @@ export function DeleteJobDialog({
             &quot;{job.title}&quot; will be permanently removed. This can&apos;t
             be undone.
             {job.applicantsCount > 0
-              ? ` Its ${job.applicantsCount} ${applications} will be removed too.`
+              ? " Candidates who applied will still see their application."
               : ""}
           </DialogDescription>
         </DialogHeader>

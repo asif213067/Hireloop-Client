@@ -3,6 +3,7 @@ import { Manrope, JetBrains_Mono } from "next/font/google"
 
 import "./globals.css"
 import { cn } from "@/lib/utils"
+import { Toaster } from "@/components/ui/sonner"
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -113,6 +114,7 @@ export default function RootLayout({
           Skip to content
         </a>
         {children}
+        <Toaster />
       </body>
     </html>
   )

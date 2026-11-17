@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import {
   BadgeCheckIcon,
-  BookmarkIcon,
   BriefcaseIcon,
   CalendarIcon,
   MapPinIcon,
@@ -13,6 +12,8 @@ import { notFound } from "next/navigation"
 
 import { fetchPublicJob } from "@/lib/public-jobs"
 import { formatDate, formatCompensation, getJobTypeLabel } from "@/lib/jobs"
+import { ApplyButton } from "@/components/jobs/apply-button"
+import { SaveButton } from "@/components/jobs/save-button"
 
 type Params = Promise<{ id: string }>
 
@@ -142,19 +143,12 @@ export default async function Page({ params }: { params: Params }) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:pl-4">
-            <button
-              type="button"
-              aria-label="Save job"
-              className="flex size-11 items-center justify-center rounded-lg border border-border bg-card text-foreground outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <BookmarkIcon aria-hidden className="size-4" />
-            </button>
-            <button
-              type="button"
-              className="h-11 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              Apply Now
-            </button>
+            <SaveButton jobId={id} />
+            <ApplyButton
+              jobId={id}
+              jobTitle={job.title}
+              className="h-11 px-4"
+            />
           </div>
         </header>
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_20rem]">

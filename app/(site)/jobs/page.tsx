@@ -5,7 +5,7 @@ import type { ReactNode } from "react"
 import Form from "next/form"
 
 import { FiltersPanel } from "@/components/jobs/filters-panel"
-import { JobCard } from "@/components/jobs/job-card"
+import { JobCards } from "@/components/jobs/job-cards"
 import {
   POSTED_OPTIONS,
   SORT_OPTIONS,
@@ -373,13 +373,7 @@ export default async function Page({
                   </NoticeCard>
                 ) : (
                   <>
-                    <ul className="mt-4 grid gap-4">
-                      {result.jobs.map((job) => (
-                        <li key={job.id}>
-                          <JobCard job={job} />
-                        </li>
-                      ))}
-                    </ul>
+                    <JobCards jobs={result.jobs} />
                     <JobsPagination
                       params={currentParams}
                       currentPage={search.page}

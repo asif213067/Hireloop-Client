@@ -54,18 +54,20 @@ type PasswordFieldProps = {
   placeholder: string
   value: string
   onChange: (value: string) => void
+  label?: string
   minLength?: number
   hint?: string
   describedBy?: string
 }
 
-// Password field with show/hide toggle and optional hint
+// Password field with show/hide toggle and optional label and hint
 export function PasswordField({
   id,
   autoComplete,
   placeholder,
   value,
   onChange,
+  label = "Password",
   minLength,
   hint,
   describedBy,
@@ -76,7 +78,7 @@ export function PasswordField({
   return (
     <div>
       <label htmlFor={id} className={labelClass}>
-        Password
+        {label}
       </label>
       <div className="relative">
         <Input
