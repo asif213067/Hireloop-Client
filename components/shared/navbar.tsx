@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils"
 const navLinks = [
   { label: "Browse Jobs", href: "/jobs" },
   { label: "Company", href: "/company" },
-  { label: "Pricing", href: "/pricing" },
+  { label: "Pricing", href: "/checkout" },
 ] as const
 
 function isActive(pathname: string, href: string) {
