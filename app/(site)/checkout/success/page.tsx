@@ -195,7 +195,7 @@ export default async function CheckoutSuccessPage({
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href={dashboardHref}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-black shadow-lg transition-transform hover:bg-white/90 active:scale-[0.98]"
+              className="flex py-4 h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-black shadow-lg transition-transform hover:bg-white/90 active:scale-[0.98]"
             >
               <span>{dashboardLabel}</span>
               <ArrowRight aria-hidden className="size-4" />

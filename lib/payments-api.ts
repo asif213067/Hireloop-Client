@@ -14,7 +14,8 @@ export type PaymentRecord = {
 export type UserSubscription = {
   plan: "free" | "pro"
   billingInterval?: "monthly" | "yearly" | null
-  status?: "active" | "canceled" | "past_due" | "none"
+  status?: "active" | "canceled" | "past_due" | "expired" | "none"
+  currentPeriodStart?: string | null
   currentPeriodEnd?: string | null
   cancelAtPeriodEnd?: boolean
 }
