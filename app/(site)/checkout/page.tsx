@@ -1,122 +1,92 @@
-// Checkout / payment page — from the Figma "Public / Checkout — Stripe
-// Payment" (simplified: no card fields, since payment will be collected
-// on Stripe's hosted Checkout page — the Pay button hands off there).
-//
-// Layout: order summary (left) + payment method card with Pay button
-// (right), "Powered by Stripe" footer note.
-//
-// The order is a constant for now; make it dynamic (plan or application
-// fee, or a ?plan= search param) once the billing endpoint exists.
-
+import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, CreditCard, Lock } from "lucide-react"
-// import { PayButton } from "@/component/checkout/pay-button"
+import { ArrowLeft, AlertCircle } from "lucide-react"
 
-const ORDER = {
-  name: "Hireloop Pro Plan",
-  description: "Access to all features",
+import { getSession } from "@/lib/session"
+import { CheckoutForm } from "@/components/checkout/checkout-form"
+
+export const metadata: Metadata = {
+  title: "Subscription & Pricing Plans",
+  description:
+    "Upgrade to Hireloop Pro for unlimited job applications, unlimited job postings, and premium career tools.",
 }
-
-// Figma checkout palette.
-const borderClass = "border-[#2e2e33]"
-const mutedClass = "text-[#a1a1aa]"
-const dimmedClass = "text-[#808089]"
 
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ canceled?: string }>
+  searchParams: Promise<{ canceled?: string; error?: string; interval?: string }>
 }) {
-  const { canceled } = await searchParams
+  const { canceled, error, interval } = await searchParams
+  const session = await getSession()
+  const user = session?.user ?? null
+  const isSubscribed = (user as unknown as { subscription?: { plan?: string; status?: string } })?.subscription?.plan === "pro"
 
-  if (canceled) {
-    console.log(
-      "Order canceled -- continue to shop around and check out when you're ready."
-    )
-  }
+  const initialInterval = interval === "yearly" ? "yearly" : "monthly"
 
   return (
-    <div className="min-w-0">
-      {/* Minimal header like the Figma checkout top bar: brand only. */}
-      <header className="mx-auto flex h-24 w-full max-w-3xl items-center px-4">
+    <div className="min-h-screen bg-[#08080a] text-white">
+      {/* Header bar */}
+      <header className="mx-auto flex h-20 w-full max-w-5xl items-center px-4">
         <Link
           href="/"
-          aria-label="Back"
+          aria-label="Back to home"
           className="mr-6 text-[#a1a1aa] transition-colors hover:text-white"
         >
-          <ArrowLeft aria-hidden className="size-6" />
+          <ArrowLeft aria-hidden className="size-5" />
         </Link>
-        <Link href="/" className="font-heading text-lg font-bold text-white">
+        <Link href="/" className="font-heading text-xl font-bold tracking-tight text-white">
           Hireloop
         </Link>
+        <div className="ml-auto text-xs text-[#a1a1aa]">
+          {user ? (
+            <span>
+              Signed in as <strong className="text-white">{user.email}</strong>
+            </span>
+          ) : (
+            <Link href="/signin?callbackUrl=/checkout" className="text-[#0070E0] hover:underline">
+              Sign In to your account
+            </Link>
+          )}
+        </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-3xl gap-16 px-4 pt-4 pb-16 lg:grid-cols-2">
-        {/* Order summary */}
-        <section>
-          <p
-            className={`text-xs font-bold tracking-widest uppercase ${dimmedClass}`}
-          >
-            Order summary
-          </p>
-
-          <div className="mt-7 flex items-start justify-between gap-4 border-b border-[#2e2e33] pb-8">
-            <div>
-              <h2 className="text-lg leading-7 font-semibold text-white">
-                {ORDER.name}
-              </h2>
-              <p className={`mt-1.5 text-sm ${mutedClass}`}>
-                {ORDER.description}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Payment */}
-        <section>
-          <h2 className="text-sm font-semibold text-white">Payment method</h2>
-
-          <div
-            className={`mt-7 overflow-hidden rounded-lg border ${borderClass}`}
-          >
-            {/* Card method header — the real form fields come from
-                            Stripe, so the body is a redirect note for now. */}
-            <div className="flex items-center gap-3 border-b border-[#2e2e33] bg-[#27272a] px-4 py-3.5">
-              <CreditCard aria-hidden className="size-5 text-[#a1a1aa]" />
-              <span className="text-sm font-medium text-white">Card</span>
-            </div>
-
-            <div className="flex flex-col gap-4 p-4">
-              <p className="min-h-22.5 text-base text-[#888891]">
-                You&apos;ll be redirected to Stripe&apos;s secure checkout to
-                complete your payment. Card details are never stored on
-                Hireloop.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            {/* TODO: wire the Stripe Checkout Session redirect (pay-button). */}
-
-            <form action="/api/checkout_sessions" method="POST">
-              <section>
-                <button
-                  type="submit"
-                  role="link"
-                  className="h-15 w-full rounded-lg bg-[#0070E0] text-lg font-bold text-white shadow-[0_4px_6px_-4px_rgba(94,158,246,0.3),0_10px_15px_-3px_rgba(94,158,246,0.3)] transition-colors hover:bg-[#3F90E5]"
-                >
-                  Checkout
-                </button>
-              </section>
-            </form>
-            <p
-              className={`mt-4 flex items-center justify-center gap-1.5 text-xs ${dimmedClass}`}
-            >
-              <Lock aria-hidden className="size-3.5" />
-              Powered by Stripe
+      <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-20">
+        {/* Alerts */}
+        {canceled && (
+          <div className="mb-8 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300">
+            <AlertCircle className="size-5 shrink-0 text-amber-400" />
+            <p>
+              Your checkout was canceled. No payment was charged. You can select your plan and try
+              again at any time.
             </p>
           </div>
-        </section>
+        )}
+
+        {error && (
+          <div className="mb-8 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+            <AlertCircle className="size-5 shrink-0 text-red-400" />
+            <p>Payment error: {error}</p>
+          </div>
+        )}
+
+        <div className="mb-10 text-center">
+          <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+            Flexible Subscription Plans
+          </span>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Supercharge Your Hiring & Career
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-base text-[#a1a1aa]">
+            Unlock unlimited applications, priority listing, and instant talent engagement with
+            Hireloop Pro.
+          </p>
+        </div>
+
+        <CheckoutForm
+          userRole={user?.role}
+          initialInterval={initialInterval}
+          isSubscribed={isSubscribed}
+        />
       </main>
     </div>
   )

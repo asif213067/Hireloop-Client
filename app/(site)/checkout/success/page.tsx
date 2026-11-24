@@ -4,13 +4,12 @@
 // transaction id (`payment_intent.id`) come from the Checkout Session.
 
 import { notFound, redirect } from "next/navigation"
-
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, Check, ShieldCheck } from "lucide-react"
-// import type Stripe from "stripe"
 
 import { stripe } from "@/lib/stripe"
 import { checkoutVerify } from "@/lib/actions/payments"
+import { getSession } from "@/lib/session"
 
 // Fixed en-US so SSR and client agree.
 const formatDate = (unixSeconds: number) =>
@@ -31,9 +30,15 @@ export default async function CheckoutSuccessPage({
 
   if (!session_id) notFound()
 
-  const session = await stripe.checkout.sessions.retrieve(session_id, {
-    expand: ["line_items", "payment_intent"],
-  })
+  let session
+  try {
+    session = await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ["line_items", "payment_intent", "subscription"],
+    })
+  } catch (err) {
+    console.error("Failed to retrieve checkout session:", err)
+    return redirect("/checkout?error=SessionNotFound")
+  }
 
   if (session.status === "open") {
     return redirect("/")
@@ -43,9 +48,22 @@ export default async function CheckoutSuccessPage({
     return redirect("/checkout?canceled=1")
   }
 
-  // Hand the verified session to the backend (plan activation etc.).
-  const result = await checkoutVerify(session_id)
-  console.log({ result })
+  // Hand the verified session to the backend (plan activation, payment recording etc.).
+  await checkoutVerify(session_id).catch((err) => {
+    console.error("checkoutVerify error:", err)
+  })
+
+  // Get current user session to determine dashboard destination
+  const userSession = await getSession()
+  const isRecruiter = userSession?.user?.role === "recruiter"
+
+  const dashboardHref = isRecruiter
+    ? "/dashboard/recruiter/jobs"
+    : "/dashboard/seeker/applications"
+
+  const dashboardLabel = isRecruiter
+    ? "Go to Posted Jobs"
+    : "Go to My Applications"
 
   // Receipt details.
   const paymentIntent = typeof session.payment_intent === "object" ? session.payment_intent : null
@@ -56,6 +74,7 @@ export default async function CheckoutSuccessPage({
   })
   const lineItems = session.line_items?.data ?? []
   const planName = lineItems[0]?.description || "Hireloop Pro Plan"
+
   // Mono chip for long Stripe ids — truncated visually, selectable fully.
   const idChip = (id: string) => (
     <code
@@ -165,10 +184,10 @@ export default async function CheckoutSuccessPage({
           </div>
 
           <Link
-            href="/dashboard/seeker/applications"
+            href={dashboardHref}
             className="mt-8 flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-black shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] transition-colors hover:bg-white/90"
           >
-            Go to My Applications
+            {dashboardLabel}
             <ArrowRight aria-hidden className="size-4" />
           </Link>
         </section>
