@@ -160,7 +160,7 @@ export function getDashboardNav(role: Role): DashboardNav {
               label: "Billing",
               href: "/dashboard/seeker/billing",
               icon: CreditCardIcon,
-              enabled: false,
+              enabled: true,
             },
           ]
         : []),

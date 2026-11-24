@@ -1,17 +1,24 @@
-// Payment success — from the Figma "Public / Checkout — Payment
-// Successful": centered success card over a blue glow, with a verified
-// session box. Receipt details (amount, date, email) and the Stripe
-// transaction id (`payment_intent.id`) come from the Checkout Session.
+// Payment success — Figma "Public / Checkout — Payment Successful":
+// Centered success card over ambient blue glow, with verified session box,
+// receipt breakdown (amount, date, email, transaction id), print receipt capability,
+// and role-tailored dashboard navigation.
 
+import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Check, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, CreditCard, ShieldCheck } from "lucide-react"
 
 import { stripe } from "@/lib/stripe"
 import { checkoutVerify } from "@/lib/actions/payments"
 import { getSession } from "@/lib/session"
+import { ReceiptActions } from "@/components/checkout/receipt-actions"
 
-// Fixed en-US so SSR and client agree.
+export const metadata: Metadata = {
+  title: "Payment Successful | Hireloop Pro",
+  description: "Your payment was processed successfully. Welcome to Hireloop Pro.",
+}
+
+// Fixed en-US locale so SSR and hydration always agree
 const formatDate = (unixSeconds: number) =>
   new Date(unixSeconds * 1000).toLocaleDateString("en-US", {
     month: "short",
@@ -45,15 +52,15 @@ export default async function CheckoutSuccessPage({
   }
 
   if (session.status !== "complete" || session.payment_status !== "paid") {
-    return redirect("/checkout?canceled=1")
+    return redirect("/checkout/cancel")
   }
 
-  // Hand the verified session to the backend (plan activation, payment recording etc.).
+  // Fulfill subscription on server idempotently
   await checkoutVerify(session_id).catch((err) => {
     console.error("checkoutVerify error:", err)
   })
 
-  // Get current user session to determine dashboard destination
+  // Get current user session to determine role & dashboard destinations
   const userSession = await getSession()
   const isRecruiter = userSession?.user?.role === "recruiter"
 
@@ -65,8 +72,13 @@ export default async function CheckoutSuccessPage({
     ? "Go to Posted Jobs"
     : "Go to My Applications"
 
-  // Receipt details.
-  const paymentIntent = typeof session.payment_intent === "object" ? session.payment_intent : null
+  const billingHref = isRecruiter
+    ? "/dashboard/recruiter/settings"
+    : "/dashboard/seeker/billing"
+
+  // Receipt details
+  const paymentIntent =
+    typeof session.payment_intent === "object" ? session.payment_intent : null
   const transactionId = paymentIntent?.id ?? session.id
   const amount = (session.amount_total ?? 0).toLocaleString("en-US", {
     style: "currency",
@@ -75,121 +87,134 @@ export default async function CheckoutSuccessPage({
   const lineItems = session.line_items?.data ?? []
   const planName = lineItems[0]?.description || "Hireloop Pro Plan"
 
-  // Mono chip for long Stripe ids — truncated visually, selectable fully.
+  // Mono chip for long Stripe IDs
   const idChip = (id: string) => (
     <code
       title={id}
-      className="max-w-47.5 truncate rounded bg-[#1f2937] px-2 py-1 font-mono text-[11px] text-[#9ca3af] select-all"
+      className="max-w-44 truncate rounded bg-[#1f2937] px-2 py-0.5 font-mono text-[11px] text-[#9ca3af] select-all sm:max-w-56"
     >
       {id}
     </code>
   )
 
   return (
-    <div className="relative min-h-screen bg-[#08080a]">
-      <header className="mx-auto flex h-24 w-full max-w-3xl items-center px-4">
+    <div className="relative min-h-screen bg-[#08080a] text-white">
+      {/* Top minimal header */}
+      <header className="mx-auto flex h-20 w-full max-w-4xl items-center justify-between px-4">
+        <div className="flex items-center">
+          <Link
+            href="/"
+            aria-label="Back to home"
+            className="mr-5 text-[#a1a1aa] transition-colors hover:text-white"
+          >
+            <ArrowLeft aria-hidden className="size-5" />
+          </Link>
+          <Link href="/" className="font-heading text-lg font-bold tracking-tight text-white">
+            Hireloop
+          </Link>
+        </div>
+
         <Link
-          href="/"
-          aria-label="Back"
-          className="mr-6 text-[#a1a1aa] transition-colors hover:text-white"
+          href={billingHref}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#a1a1aa] transition-colors hover:bg-white/10 hover:text-white"
         >
-          <ArrowLeft aria-hidden className="size-6" />
-        </Link>
-        <Link href="/" className="font-heading text-lg font-bold text-white">
-          Hireloop
+          <CreditCard className="size-3.5 text-primary" />
+          <span>Billing & Plan</span>
         </Link>
       </header>
 
+      {/* Ambient background glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute top-1/2 left-1/2 size-150 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1e3a8a] blur-[120px]"
+        className="pointer-events-none absolute top-1/3 left-1/2 size-120 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1e3a8a]/40 blur-[130px]"
       />
 
-      <main className="relative flex items-start justify-center px-4 pb-24">
-        <section className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#141418] px-10 py-10 text-center shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_1px_2px_rgba(0,0,0,0.35),inset_0_1px_rgba(255,255,255,0.035)]">
+      {/* Main card */}
+      <main className="relative mx-auto flex w-full max-w-xl flex-col items-center px-4 pt-4 pb-24">
+        <section className="w-full rounded-3xl border border-white/10 bg-[#141418] p-6 text-center shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.35),inset_0_1px_rgba(255,255,255,0.04)] sm:p-10">
+          {/* Green checkmark badge with glow */}
           <div className="flex justify-center">
             <span
               aria-hidden
-              className="flex size-16 items-center justify-center rounded-full bg-[#10b981] shadow-[0_0_0_4px_rgba(16,185,129,0.05)]"
+              className="flex size-16 items-center justify-center rounded-full bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)]"
             >
               <Check strokeWidth={3} className="size-8 text-white" />
             </span>
           </div>
 
-          <p className="mt-7 inline-flex h-5 items-center rounded border border-[#3b82f6] bg-[#3b82f6]/15 px-2.75 text-[11px] font-medium tracking-[0.34em] text-[#60a5fa] uppercase">
-            Upgrade successful
+          <p className="mt-6 inline-flex h-6 items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 text-[11px] font-semibold tracking-wider text-emerald-400 uppercase">
+            Upgrade Successful
           </p>
 
-          <h1 className="mt-4 text-[22px] font-semibold tracking-[-0.02em] text-[#EDEDEF]">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-[#EDEDEF] sm:text-3xl">
             Welcome to Hireloop Pro
           </h1>
 
-          <p className="mx-auto mt-5 max-w-91.5 text-base leading-6.5 text-[#9ca3af]">
-            Your payment of {amount} was received perfectly. All advanced
-            premium features are unlocked on your account.
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#9ca3af] sm:text-base">
+            Your payment of <strong className="text-white">{amount}</strong> was received
+            successfully. All premium features, unlimited limits, and priority badges are now
+            active on your account.
           </p>
 
-          <div className="mt-10 rounded-xl border border-[#1f2937] bg-black px-4 py-3.5 text-left">
+          {/* Receipt card */}
+          <div className="mt-8 rounded-2xl border border-[#1f2937] bg-black/80 p-5 text-left">
             <div className="flex items-center gap-2.5">
-              <ShieldCheck aria-hidden className="size-5 shrink-0 text-[#6b7280]" />
-
-              <span className="text-[13px] font-medium text-[#a0a0ab]">
-                Session verified
+              <ShieldCheck aria-hidden className="size-5 shrink-0 text-emerald-400" />
+              <span className="text-xs font-semibold text-white sm:text-sm">
+                Stripe Verified Session
               </span>
-
               <span className="ml-auto">{idChip(session_id)}</span>
             </div>
 
-            <dl className="mt-3 divide-y divide-[#1f2937] border-t border-[#1f2937] pt-1">
-              <div className="flex items-center justify-between gap-4 py-2.5">
-                <dt className="shrink-0 text-[13px] text-[#a0a0ab]">
-                  Transaction ID
-                </dt>
-                <dd>
-                  <code
-                    title={transactionId}
-                    className="block max-w-60 truncate rounded bg-[#1f2937] px-2 py-1 font-mono text-[11px] text-[#9ca3af] select-all"
-                  >
-                    {transactionId}
-                  </code>
-                </dd>
+            <dl className="mt-4 divide-y divide-[#1f2937] border-t border-[#1f2937]">
+              <div className="flex items-center justify-between gap-4 py-2.5 text-xs sm:text-sm">
+                <dt className="shrink-0 text-[#888891]">Transaction ID</dt>
+                <dd>{idChip(transactionId)}</dd>
               </div>
 
-              <div className="flex items-center justify-between gap-4 py-2.5">
-                <dt className="text-[13px] text-[#a0a0ab]">Plan</dt>
-                <dd className="truncate text-[13px] text-[#EDEDEF]">{planName}</dd>
+              <div className="flex items-center justify-between gap-4 py-2.5 text-xs sm:text-sm">
+                <dt className="text-[#888891]">Subscribed Plan</dt>
+                <dd className="font-medium text-[#EDEDEF]">{planName}</dd>
               </div>
 
-              <div className="flex items-center justify-between gap-4 py-2.5">
-                <dt className="text-[13px] text-[#a0a0ab]">Amount paid</dt>
-                <dd className="text-[13px] font-medium text-[#EDEDEF]">{amount}</dd>
+              <div className="flex items-center justify-between gap-4 py-2.5 text-xs sm:text-sm">
+                <dt className="text-[#888891]">Amount Paid</dt>
+                <dd className="font-semibold text-emerald-400">{amount}</dd>
               </div>
 
-              <div className="flex items-center justify-between gap-4 py-2.5">
-                <dt className="text-[13px] text-[#a0a0ab]">Payment date</dt>
-                <dd className="text-[13px] whitespace-nowrap text-[#EDEDEF]">
-                  {formatDate(session.created)}
-                </dd>
+              <div className="flex items-center justify-between gap-4 py-2.5 text-xs sm:text-sm">
+                <dt className="text-[#888891]">Payment Date</dt>
+                <dd className="text-[#EDEDEF]">{formatDate(session.created)}</dd>
               </div>
 
-              {session.customer_email ? (
-                <div className="flex items-center justify-between gap-4 py-2.5">
-                  <dt className="text-[13px] text-[#a0a0ab]">Receipt email</dt>
-                  <dd className="truncate text-[13px] text-[#EDEDEF]">
-                    {session.customer_email}
-                  </dd>
+              {session.customer_email && (
+                <div className="flex items-center justify-between gap-4 py-2.5 text-xs sm:text-sm">
+                  <dt className="text-[#888891]">Receipt Email</dt>
+                  <dd className="truncate text-[#EDEDEF]">{session.customer_email}</dd>
                 </div>
-              ) : null}
+              )}
             </dl>
+
+            <ReceiptActions sessionId={session_id} />
           </div>
 
-          <Link
-            href={dashboardHref}
-            className="mt-8 flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-black shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] transition-colors hover:bg-white/90"
-          >
-            {dashboardLabel}
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
+          {/* Actions */}
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={dashboardHref}
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-black shadow-lg transition-transform hover:bg-white/90 active:scale-[0.98]"
+            >
+              <span>{dashboardLabel}</span>
+              <ArrowRight aria-hidden className="size-4" />
+            </Link>
+
+            <Link
+              href="/"
+              className="flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-medium text-[#a1a1aa] transition-colors hover:bg-white/10 hover:text-white"
+            >
+              Home
+            </Link>
+          </div>
         </section>
       </main>
     </div>
