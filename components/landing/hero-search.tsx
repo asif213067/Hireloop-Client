@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { MapPinIcon, SearchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -31,11 +32,17 @@ function Field({ icon, name, placeholder, value, onChange }: FieldProps) {
 }
 
 export function HeroSearch() {
+  const router = useRouter()
   const [keywords, setKeywords] = useState("")
   const [location, setLocation] = useState("")
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const params = new URLSearchParams()
+    if (keywords.trim()) params.set("q", keywords.trim())
+    if (location.trim()) params.set("location", location.trim())
+    const queryString = params.toString()
+    router.push(queryString ? `/jobs?${queryString}` : "/jobs")
   }
 
   return (
