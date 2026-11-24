@@ -63,6 +63,11 @@ export function ApplyButton({
       case "not-seeker":
         toast.error("Only job seekers can apply.")
         return
+      case "limit-reached":
+        toast.error(
+          "Monthly application limit reached (7 jobs/mo on Free). Upgrade to Pro for unlimited applications."
+        )
+        return
       case "not-signed-in":
         toast.error("Please sign in to apply.")
         router.push("/signin")

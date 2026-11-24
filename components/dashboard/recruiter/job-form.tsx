@@ -327,6 +327,12 @@ export function JobForm({ jobId }: { jobId?: string }) {
     }
 
     if (status === 403) {
+      if (isRecord(data) && data.error === "Monthly job posting limit reached") {
+        failWith(
+          "Monthly job posting limit reached (5 jobs/mo on Free). Upgrade to Pro for unlimited job postings."
+        )
+        return
+      }
       failWith("Your account can't post jobs.")
       return
     }

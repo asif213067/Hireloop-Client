@@ -150,6 +150,7 @@ export type ApplyResult =
   | "job-closed"
   | "not-seeker"
   | "not-signed-in"
+  | "limit-reached"
   | "error"
 
 export async function applyToJob(jobId: string): Promise<ApplyResult> {
@@ -173,7 +174,16 @@ export async function applyToJob(jobId: string): Promise<ApplyResult> {
       }
       return "error"
     }
-    if (res.status === 403) return "not-seeker"
+    if (res.status === 403) {
+      const data: unknown = await res.json().catch(() => null)
+      if (
+        isRecord(data) &&
+        data.error === "Monthly application limit reached"
+      ) {
+        return "limit-reached"
+      }
+      return "not-seeker"
+    }
     if (res.status === 401) return "not-signed-in"
 
     if (process.env.NODE_ENV !== "production") {
