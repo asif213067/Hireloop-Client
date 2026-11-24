@@ -4,7 +4,7 @@
 
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, HelpCircle, RefreshCw, ShieldAlert, Sparkles } from "lucide-react"
+import { ArrowRight, HelpCircle, Home, ShieldAlert, Sparkles } from "lucide-react"
 
 import { getSession } from "@/lib/session"
 
@@ -23,45 +23,21 @@ export default async function CheckoutCancelPage() {
     : "/dashboard/seeker"
 
   return (
-    <div className="relative min-h-screen bg-[#08080a] text-white">
-      {/* Minimal Header */}
-      <header className="mx-auto flex h-20 w-full max-w-4xl items-center justify-between px-4">
-        <div className="flex items-center">
-          <Link
-            href="/"
-            aria-label="Back to home"
-            className="mr-5 text-[#a1a1aa] transition-colors hover:text-white"
-          >
-            <ArrowLeft aria-hidden className="size-5" />
-          </Link>
-          <Link href="/" className="font-heading text-lg font-bold tracking-tight text-white">
-            Hireloop
-          </Link>
-        </div>
-
-        <Link
-          href="/checkout"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#0070E0]/30 bg-[#0070E0]/10 px-3 py-1.5 text-xs font-medium text-[#60a5fa] transition-colors hover:bg-[#0070E0]/20"
-        >
-          <RefreshCw className="size-3.5" />
-          <span>View Plans</span>
-        </Link>
-      </header>
-
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[#08080a] text-white">
       {/* Ambient amber glow */}
       <div
         aria-hidden
-        className="pointer-events-none absolute top-1/3 left-1/2 size-120 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-600/15 blur-[140px]"
+        className="pointer-events-none absolute top-1/4 left-1/2 size-120 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-600/15 blur-[140px]"
       />
 
       {/* Main Container */}
-      <main className="relative mx-auto flex w-full max-w-xl flex-col items-center px-4 pt-4 pb-24">
-        <section className="w-full rounded-3xl border border-white/10 bg-[#141418] p-6 text-center shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.35),inset_0_1px_rgba(255,255,255,0.04)] sm:p-10">
+      <main className="relative mx-auto flex w-full max-w-xl flex-col items-center px-4 py-10 sm:py-16">
+        <section className="w-full overflow-hidden rounded-3xl border border-white/10 bg-[#141418] p-6 text-center shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.35),inset_0_1px_rgba(255,255,255,0.04)] sm:p-10">
           {/* Amber shield icon */}
           <div className="flex justify-center">
             <span
               aria-hidden
-              className="flex size-16 items-center justify-center rounded-full bg-amber-500/20 border border-amber-500/40 shadow-[0_0_25px_rgba(245,158,11,0.25)]"
+              className="flex size-16 items-center justify-center rounded-full border border-amber-500/40 bg-amber-500/20 shadow-[0_0_30px_rgba(245,158,11,0.25)]"
             >
               <ShieldAlert className="size-8 text-amber-400" />
             </span>
@@ -82,10 +58,10 @@ export default async function CheckoutCancelPage() {
           </p>
 
           {/* Info Card */}
-          <div className="mt-8 rounded-2xl border border-[#1f2937] bg-black/70 p-5 text-left">
+          <div className="mt-8 overflow-hidden rounded-2xl border border-[#1f2937] bg-black/70 p-5 text-left sm:p-6">
             <div className="flex items-center gap-2">
               <HelpCircle className="size-4 text-[#888891]" />
-              <h2 className="text-xs font-semibold tracking-wider uppercase text-[#a1a1aa]">
+              <h2 className="text-xs font-semibold tracking-wider text-[#a1a1aa] uppercase">
                 Common reasons & next steps
               </h2>
             </div>
@@ -94,15 +70,15 @@ export default async function CheckoutCancelPage() {
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-1.5 shrink-0 rounded-full bg-amber-400" />
                 <span>
-                  <strong>Need a different billing cycle?</strong> You can switch between Monthly
-                  ($19/mo) and Annual ($182.40/yr with 20% discount) at any time.
+                  <strong>Need a different billing cycle?</strong> You can choose between Monthly
+                  ($19/mo) and Annual ($182.40/yr with 20% discount) at checkout.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-1 size-1.5 shrink-0 rounded-full bg-amber-400" />
                 <span>
-                  <strong>Payment method issue?</strong> Stripe supports credit/debit cards, Apple
-                  Pay, Google Pay, and other global options.
+                  <strong>Payment method issue?</strong> Stripe supports all major credit/debit
+                  cards, Apple Pay, Google Pay, and other global options.
                 </span>
               </li>
               <li className="flex items-start gap-2">
@@ -131,6 +107,14 @@ export default async function CheckoutCancelPage() {
             >
               <span>Dashboard</span>
               <ArrowRight className="size-4" />
+            </Link>
+
+            <Link
+              href="/"
+              className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-[#a1a1aa] transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <Home className="size-4" />
+              <span className="sr-only sm:not-sr-only">Home</span>
             </Link>
           </div>
         </section>

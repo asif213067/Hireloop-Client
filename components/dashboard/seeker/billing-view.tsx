@@ -11,7 +11,6 @@ import {
   CreditCard,
   FileText,
   RefreshCw,
-  Sparkles,
   Zap,
 } from "lucide-react"
 
@@ -126,7 +125,6 @@ export function SeekerBillingView() {
                   >
                     {isPro ? (
                       <>
-                        <Sparkles className="size-3 text-emerald-400" />
                         Pro Plan Active
                       </>
                     ) : (

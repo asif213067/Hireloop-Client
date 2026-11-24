@@ -42,63 +42,65 @@ export function CheckoutForm({
       ]
 
   return (
-    <div className="grid w-full gap-12 lg:grid-cols-2">
+    <div className="grid w-full gap-8 lg:grid-cols-2 lg:gap-12">
       {/* Left Column: Plan Options & Order Summary */}
-      <section className="flex flex-col gap-8">
+      <section className="flex flex-col gap-6 sm:gap-8">
         <div>
-          <p className="text-xs font-bold tracking-widest uppercase text-[#808089]">
+          <p className="text-xs font-bold tracking-widest text-[#808089] uppercase">
             Select billing cycle
           </p>
 
           {/* Billing Interval Selector */}
-          <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-[#2e2e33] bg-[#141418] p-1.5">
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl border border-[#2e2e33] bg-[#141418] p-1.5 sm:gap-3">
             <button
               type="button"
               onClick={() => setInterval("monthly")}
-              className={`flex flex-col items-center justify-center rounded-lg py-3 text-center transition-all ${
+              className={`flex flex-col items-center justify-center rounded-xl px-3 py-3 text-center transition-all ${
                 !isYearly
                   ? "bg-[#0070E0] text-white shadow-md"
                   : "text-[#a1a1aa] hover:text-white"
               }`}
             >
-              <span className="text-sm font-semibold">Monthly</span>
-              <span className="mt-0.5 text-xs opacity-90">$19 / month</span>
+              <span className="text-xs font-semibold sm:text-sm">Monthly</span>
+              <span className="mt-0.5 text-[11px] opacity-90 sm:text-xs">$19 / month</span>
             </button>
 
             <button
               type="button"
               onClick={() => setInterval("yearly")}
-              className={`relative flex flex-col items-center justify-center rounded-lg py-3 text-center transition-all ${
+              className={`relative flex flex-col items-center justify-center rounded-xl px-3 py-3 text-center transition-all ${
                 isYearly
                   ? "bg-[#0070E0] text-white shadow-md"
                   : "text-[#a1a1aa] hover:text-white"
               }`}
             >
-              <span className="absolute -top-2.5 right-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/40">
+              <span className="absolute -top-2.5 right-1.5 inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
                 <Sparkles className="size-2.5" /> Save 20%
               </span>
-              <span className="text-sm font-semibold">Annual</span>
-              <span className="mt-0.5 text-xs opacity-90">$15.20 / mo ($182.40/yr)</span>
+              <span className="text-xs font-semibold sm:text-sm">Annual</span>
+              <span className="mt-0.5 text-[11px] opacity-90 sm:text-xs">
+                $15.20 / mo <span className="hidden sm:inline">($182.40/yr)</span>
+              </span>
             </button>
           </div>
         </div>
 
         {/* Plan Details & Features */}
-        <div className="rounded-2xl border border-[#2e2e33] bg-[#141418] p-6">
-          <div className="flex items-start justify-between">
+        <div className="rounded-2xl border border-[#2e2e33] bg-[#141418] p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <span className="inline-flex items-center rounded-md border border-[#3b82f6]/30 bg-[#3b82f6]/10 px-2.5 py-0.5 text-xs font-medium text-[#60a5fa]">
                 {isRecruiter ? "Recruiter Pro" : "Candidate Pro"}
               </span>
-              <h3 className="mt-2 text-xl font-bold text-white">{planName}</h3>
+              <h3 className="mt-2 text-lg font-bold text-white sm:text-xl">{planName}</h3>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <div className="text-2xl font-extrabold text-white">{planPrice}</div>
               <div className="text-xs text-[#a1a1aa]">{billingPeriod}</div>
             </div>
           </div>
 
-          <p className="mt-3 text-sm text-[#888891]">
+          <p className="mt-3 text-xs leading-relaxed text-[#888891] sm:text-sm">
             {isYearly
               ? "Billed annually at $182.40. Enjoy full Pro access at just $15.20/month with 20% savings."
               : "Billed monthly at $19.00. Unlocks unlimited activity and premium candidate/recruiter capabilities."}
@@ -108,7 +110,7 @@ export function CheckoutForm({
 
           <ul className="space-y-3">
             {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-start gap-2.5 text-sm text-[#d4d4d8]">
+              <li key={benefit} className="flex items-start gap-2.5 text-xs text-[#d4d4d8] sm:text-sm">
                 <Check className="mt-0.5 size-4 shrink-0 text-emerald-400" />
                 <span>{benefit}</span>
               </li>
@@ -128,13 +130,13 @@ export function CheckoutForm({
 
       {/* Right Column: Checkout & Payment Method */}
       <section className="flex flex-col gap-6">
-        <h2 className="text-xs font-bold tracking-widest uppercase text-[#808089]">
+        <h2 className="text-xs font-bold tracking-widest text-[#808089] uppercase">
           Order summary & payment
         </h2>
 
         {/* Pricing breakdown */}
-        <div className="rounded-2xl border border-[#2e2e33] bg-[#141418] p-6">
-          <div className="space-y-3 text-sm">
+        <div className="rounded-2xl border border-[#2e2e33] bg-[#141418] p-5 sm:p-6">
+          <div className="space-y-3 text-xs sm:text-sm">
             <div className="flex justify-between text-[#a1a1aa]">
               <span>Base price (12 months @ $19/mo)</span>
               <span className={isYearly ? "line-through text-[#71717a]" : "text-white"}>
@@ -143,7 +145,7 @@ export function CheckoutForm({
             </div>
 
             {isYearly && (
-              <div className="flex justify-between text-emerald-400">
+              <div className="flex justify-between text-emerald-400 font-medium">
                 <span>Annual discount (20% off)</span>
                 <span>-$45.60</span>
               </div>
@@ -157,9 +159,9 @@ export function CheckoutForm({
             <hr className="border-[#2e2e33]" />
 
             <div className="flex items-baseline justify-between pt-1">
-              <span className="text-base font-semibold text-white">Total due today</span>
+              <span className="text-sm font-semibold text-white sm:text-base">Total due today</span>
               <div className="text-right">
-                <span className="text-2xl font-bold text-white">{planPrice}</span>
+                <span className="text-xl font-bold text-white sm:text-2xl">{planPrice}</span>
                 <span className="block text-xs text-[#808089]">
                   {isYearly ? "Plus local tax if applicable" : "Billed monthly"}
                 </span>
@@ -172,7 +174,7 @@ export function CheckoutForm({
         <div className="overflow-hidden rounded-xl border border-[#2e2e33] bg-[#141418]">
           <div className="flex items-center gap-3 border-b border-[#2e2e33] bg-[#1f1f23] px-4 py-3">
             <CreditCard aria-hidden className="size-4 text-[#0070E0]" />
-            <span className="text-sm font-medium text-white">
+            <span className="text-xs font-medium text-white sm:text-sm">
               Credit Card / Debit / Wallets
             </span>
             <span className="ml-auto text-[11px] font-medium text-emerald-400">
@@ -180,7 +182,7 @@ export function CheckoutForm({
             </span>
           </div>
 
-          <div className="p-4 text-sm text-[#888891] leading-relaxed">
+          <div className="p-4 text-xs leading-relaxed text-[#888891] sm:text-sm">
             You will be redirected to Stripe&apos;s 256-bit encrypted checkout to complete your
             subscription. Payment credentials and card numbers are processed by Stripe and are never
             stored on Hireloop.
@@ -199,7 +201,7 @@ export function CheckoutForm({
             <button
               type="submit"
               disabled={submitting || isSubscribed}
-              className="h-14 w-full rounded-xl bg-[#0070E0] text-base font-bold text-white shadow-[0_4px_6px_-4px_rgba(94,158,246,0.3),0_10px_15px_-3px_rgba(94,158,246,0.3)] transition-colors hover:bg-[#3F90E5] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-14 w-full rounded-xl bg-[#0070E0] text-sm font-bold text-white shadow-[0_4px_6px_-4px_rgba(94,158,246,0.3),0_10px_15px_-3px_rgba(94,158,246,0.3)] transition-colors hover:bg-[#3F90E5] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
             >
               {submitting
                 ? "Connecting to Stripe..."
