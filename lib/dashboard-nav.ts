@@ -131,7 +131,7 @@ export function getDashboardNav(role: Role): DashboardNav {
               label: "Applications",
               href: "/dashboard/recruiter/applications",
               icon: ScrollTextIcon,
-              enabled: false,
+              enabled: true,
             },
           ]
         : []),
