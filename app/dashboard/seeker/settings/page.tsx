@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { SettingsContent } from "@/components/dashboard/settings/settings-content"
+import { SeekerSettingsView } from "@/components/dashboard/seeker/settings/seeker-settings-view"
 import { requireRole } from "@/lib/session"
 
 export const metadata: Metadata = {
@@ -13,10 +13,10 @@ export default async function Page() {
   const session = await requireRole("seeker")
 
   return (
-    <SettingsContent
-      role="seeker"
+    <SeekerSettingsView
       name={session.user.name}
       email={session.user.email}
+      image={session.user.image}
     />
   )
 }
