@@ -64,6 +64,8 @@ export function SeekerBillingView() {
   const [data, setData] = useState<BillingSummaryResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState(false)
+  const [nowMs, setNowMs] = useState(() => Date.now())
 
   // Standard React effect pattern without synchronous setState in effect body
   useEffect(() => {
@@ -73,11 +75,14 @@ export function SeekerBillingView() {
       .then((res) => {
         if (!ignore) {
           setData(res)
+          setError(res === null)
+          setNowMs(Date.now())
           setLoading(false)
         }
       })
       .catch(() => {
         if (!ignore) {
+          setError(true)
           setLoading(false)
         }
       })
@@ -89,9 +94,14 @@ export function SeekerBillingView() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
+    setError(false)
     try {
       const res = await fetchBillingHistory()
       setData(res)
+      setError(res === null)
+      setNowMs(Date.now())
+    } catch {
+      setError(true)
     } finally {
       setRefreshing(false)
     }
@@ -111,10 +121,9 @@ export function SeekerBillingView() {
   const expirationDate = subscription?.currentPeriodEnd || null
 
   const periodEndMs = expirationDate ? new Date(expirationDate).getTime() : null
+  const isValidEnd = periodEndMs !== null && !Number.isNaN(periodEndMs)
 
-  const [nowMs] = useState(() => Date.now())
-
-  const msRemaining = periodEndMs !== null ? periodEndMs - nowMs : null
+  const msRemaining = isValidEnd ? periodEndMs - nowMs : null
 
   const isExpired = msRemaining !== null && msRemaining <= 0
 
@@ -178,6 +187,30 @@ export function SeekerBillingView() {
         <div className="space-y-6">
           <div className="h-44 w-full animate-pulse rounded-2xl border border-white/5 bg-card/50" />
           <div className="h-64 w-full animate-pulse rounded-2xl border border-white/5 bg-card/50" />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+          <AlertCircle className="size-8 text-red-400" />
+          <div>
+            <p className="text-base font-semibold text-white">
+              Unable to load billing details
+            </p>
+            <p className="mt-1 text-xs text-red-200/80">
+              Could not synchronize your subscription status with the server. Please try again.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+          >
+            <RefreshCw
+              className={`mr-1.5 size-3.5 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Retry
+          </Button>
         </div>
       ) : (
         <>
@@ -250,7 +283,7 @@ export function SeekerBillingView() {
                   >
                     {isPro ? (
                       <>
-                        <Sparkles className="size-3 text-emerald-400" />
+                        {/* <Sparkles className="size-3 text-emerald-400" /> */}
                         {showExpirationWarning
                           ? "Expiring Soon"
                           : "Pro Plan Active"}
@@ -295,7 +328,7 @@ export function SeekerBillingView() {
                   <div className="grid grid-cols-1 gap-3 border-t border-border/60 pt-3 text-xs sm:grid-cols-3 sm:gap-4">
                     {purchaseDate && (
                       <div className="flex items-center gap-2 text-[#888891]">
-                        <Calendar className="size-3.5 text-[#0070E0]" />
+                        {/* <Calendar className="size-3.5 text-[#0070E0]" /> */}
                         <span>
                           Purchased:{" "}
                           <strong className="text-white">
@@ -306,7 +339,7 @@ export function SeekerBillingView() {
                     )}
 
                     <div className="flex items-center gap-2 text-[#888891]">
-                      <Clock className="size-3.5 text-emerald-400" />
+                      {/* <Clock className="size-3.5 text-emerald-400" /> */}
                       <span>
                         Expires:{" "}
                         <strong className="text-white">
