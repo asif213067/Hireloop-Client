@@ -41,3 +41,54 @@ export async function fetchBillingHistory(): Promise<BillingSummaryResponse | nu
   }
   return null
 }
+
+export type SubscriptionActionResult = {
+  ok: boolean
+  message?: string
+  error?: string
+  subscription?: UserSubscription
+}
+
+export async function cancelSubscription(): Promise<SubscriptionActionResult> {
+  const res = await apiRequest("/api/payments/cancel", { method: "POST" })
+  const payload = res.data as {
+    message?: string
+    error?: string
+    subscription?: UserSubscription
+  } | null
+
+  if (res.status === 200 && payload?.subscription) {
+    return {
+      ok: true,
+      message: payload.message,
+      subscription: payload.subscription,
+    }
+  }
+
+  return {
+    ok: false,
+    error: payload?.error || "Could not cancel subscription. Please try again.",
+  }
+}
+
+export async function reactivateSubscription(): Promise<SubscriptionActionResult> {
+  const res = await apiRequest("/api/payments/reactivate", { method: "POST" })
+  const payload = res.data as {
+    message?: string
+    error?: string
+    subscription?: UserSubscription
+  } | null
+
+  if (res.status === 200 && payload?.subscription) {
+    return {
+      ok: true,
+      message: payload.message,
+      subscription: payload.subscription,
+    }
+  }
+
+  return {
+    ok: false,
+    error: payload?.error || "Could not reactivate subscription. Please try again.",
+  }
+}

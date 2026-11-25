@@ -3,6 +3,7 @@ import { headers } from "next/headers"
 
 import { stripe } from "@/lib/stripe"
 import { getSession } from "@/lib/session"
+import { getValidatedUserSubscription } from "@/lib/subscription-server"
 
 export async function POST(request: NextRequest) {
   const userSession = await getSession()
@@ -25,6 +26,38 @@ export async function POST(request: NextRequest) {
       )
     }
     return NextResponse.redirect(new URL("/signin?callbackUrl=/checkout", origin), 303)
+  }
+
+  // Enforce single active Pro subscription rule on the server
+  const activeSub = await getValidatedUserSubscription(userSession.user.id)
+  if (activeSub.isActivePro) {
+    const currentPlanLabel =
+      activeSub.billingInterval === "yearly" ? "Pro Yearly" : "Pro Monthly"
+    const expiresLabel = activeSub.currentPeriodEnd
+      ? new Date(activeSub.currentPeriodEnd).toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        })
+      : "the end of your billing period"
+
+    const restrictionMessage = `You already have an active ${currentPlanLabel} subscription until ${expiresLabel}. You cannot enroll in another Pro plan until your current subscription expires.`
+
+    if (isJsonRequest) {
+      return NextResponse.json(
+        {
+          error: restrictionMessage,
+          code: "ACTIVE_SUBSCRIPTION_EXISTS",
+          subscription: activeSub,
+        },
+        { status: 409 }
+      )
+    }
+
+    return NextResponse.redirect(
+      new URL(`/checkout?error=${encodeURIComponent(restrictionMessage)}`, origin),
+      303
+    )
   }
 
   // Extract interval from form-data, json body, or query param

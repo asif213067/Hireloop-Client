@@ -19,7 +19,9 @@ import {
 
 import { Button } from "@/components/ui/button"
 import {
+  cancelSubscription,
   fetchBillingHistory,
+  reactivateSubscription,
   type BillingSummaryResponse,
 } from "@/lib/payments-api"
 
@@ -66,6 +68,16 @@ export function SeekerBillingView() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const [pendingAction, setPendingAction] = useState<
+    "cancel" | "reactivate" | null
+  >(null)
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [showSwitchInfo, setShowSwitchInfo] = useState(false)
+  const [showRefundInfo, setShowRefundInfo] = useState(false)
+  const [actionFeedback, setActionFeedback] = useState<{
+    type: "success" | "error"
+    text: string
+  } | null>(null)
 
   // Standard React effect pattern without synchronous setState in effect body
   useEffect(() => {
@@ -113,6 +125,65 @@ export function SeekerBillingView() {
 
   const isPro = subscription?.plan === "pro"
   const isYearly = subscription?.billingInterval === "yearly"
+  const isCanceledPending = Boolean(
+    subscription?.cancelAtPeriodEnd || subscription?.status === "canceled"
+  )
+
+  const handleCancelSubscription = async () => {
+    if (pendingAction || isCanceledPending) return
+    setPendingAction("cancel")
+    setActionFeedback(null)
+    try {
+      const result = await cancelSubscription()
+      if (result.ok && result.subscription) {
+        setData((prev) =>
+          prev ? { ...prev, subscription: result.subscription! } : prev
+        )
+        setConfirmingCancel(false)
+        setActionFeedback({
+          type: "success",
+          text:
+            result.message ||
+            "Subscription renewal canceled. Your Pro access remains active until your current billing period ends.",
+        })
+      } else {
+        setActionFeedback({
+          type: "error",
+          text: result.error || "Failed to cancel subscription.",
+        })
+      }
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
+  const handleReactivateSubscription = async () => {
+    if (pendingAction || !isCanceledPending) return
+    setPendingAction("reactivate")
+    setActionFeedback(null)
+    try {
+      const result = await reactivateSubscription()
+      if (result.ok && result.subscription) {
+        setData((prev) =>
+          prev ? { ...prev, subscription: result.subscription! } : prev
+        )
+        setConfirmingCancel(false)
+        setActionFeedback({
+          type: "success",
+          text:
+            result.message ||
+            "Subscription reactivated. Your plan will continue without interruption.",
+        })
+      } else {
+        setActionFeedback({
+          type: "error",
+          text: result.error || "Failed to reactivate subscription.",
+        })
+      }
+    } finally {
+      setPendingAction(null)
+    }
+  }
 
   // Date calculations using backend validated values
   const purchaseDate =
@@ -247,20 +318,40 @@ export function SeekerBillingView() {
             </div>
           )}
 
+          {/* Action Feedback Banner */}
+          {actionFeedback && (
+            <div
+              className={`flex items-start gap-3 rounded-2xl border p-4 text-xs leading-relaxed ${
+                actionFeedback.type === "success"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                  : "border-red-500/30 bg-red-500/10 text-red-200"
+              }`}
+            >
+              <AlertCircle
+                className={`mt-0.5 size-4 shrink-0 ${
+                  actionFeedback.type === "success"
+                    ? "text-emerald-400"
+                    : "text-red-400"
+                }`}
+              />
+              <span>{actionFeedback.text}</span>
+            </div>
+          )}
+
           {/* Canceled plan scheduled for expiration note */}
           {isPro &&
-            subscription?.cancelAtPeriodEnd &&
+            isCanceledPending &&
             !showExpirationWarning && (
               <div className="flex items-center gap-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-xs text-blue-200">
                 <Clock className="size-4 shrink-0 text-blue-400" />
                 <span>
-                  Your subscription has been canceled and will end on{" "}
+                  Your subscription renewal has been canceled and will end on{" "}
                   <strong className="text-white">
                     {formatFullDateTime(expirationDate)}
                   </strong>{" "}
-                  ({daysRemaining} days remaining). You will continue to enjoy
-                  unlimited applications and all Pro perks until the paid period
-                  concludes.
+                  ({daysRemaining} {daysRemaining === 1 ? "day" : "days"} remaining).
+                  You will continue to enjoy unlimited applications and all Pro perks
+                  until the paid period concludes.
                 </span>
               </div>
             )}
@@ -286,7 +377,9 @@ export function SeekerBillingView() {
                         {/* <Sparkles className="size-3 text-emerald-400" /> */}
                         {showExpirationWarning
                           ? "Expiring Soon"
-                          : "Pro Plan Active"}
+                          : isCanceledPending
+                            ? "Cancels at Period End"
+                            : "Pro Plan Active"}
                       </>
                     ) : subscription?.status === "expired" ? (
                       "Pro Expired"
@@ -363,27 +456,170 @@ export function SeekerBillingView() {
                 )}
               </div>
 
-              {/* Action Button */}
-              <div className="shrink-0">
+              {/* Action Buttons */}
+              <div className="flex shrink-0 flex-wrap items-center gap-2.5">
                 {isPro ? (
-                  <Link
-                    href="/checkout"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-                  >
-                    <span>Change Plan</span>
-                    <ArrowRight className="size-4" />
-                  </Link>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowSwitchInfo((prev) => !prev)}
+                      disabled={pendingAction !== null}
+                      className="h-10 rounded-xl border-white/10 bg-white/5 px-4 text-xs font-semibold text-white hover:bg-white/10"
+                    >
+                      {isYearly ? "Switch to Monthly" : "Switch to Yearly"}
+                    </Button>
+
+                    {isCanceledPending && !isExpired ? (
+                      <Button
+                        type="button"
+                        onClick={handleReactivateSubscription}
+                        disabled={pendingAction !== null}
+                        className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-500"
+                      >
+                        {pendingAction === "reactivate"
+                          ? "Reactivating..."
+                          : "Reactivate Subscription"}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setConfirmingCancel((prev) => !prev)}
+                        disabled={pendingAction !== null}
+                        className="h-10 rounded-xl border-red-500/30 bg-red-500/10 px-4 text-xs font-semibold text-red-300 hover:bg-red-500/20"
+                      >
+                        Cancel Subscription
+                      </Button>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowRefundInfo((prev) => !prev)}
+                      disabled={pendingAction !== null}
+                      className="h-10 rounded-xl border-amber-500/30 bg-amber-500/10 px-4 text-xs font-semibold text-amber-300 hover:bg-amber-500/20"
+                    >
+                      Request Refund
+                    </Button>
+                  </>
                 ) : (
-                  <Link
-                    href="/checkout"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0070E0] px-6 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#3F90E5]"
-                  >
-                    <Zap className="size-4" />
-                    <span>Upgrade to Pro · $19/mo</span>
-                  </Link>
+                  <>
+                    <Link
+                      href="/checkout"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0070E0] px-6 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#3F90E5]"
+                    >
+                      <Zap className="size-4" />
+                      <span>Upgrade to Pro · $19/mo</span>
+                    </Link>
+
+                    {payments.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowRefundInfo((prev) => !prev)}
+                        className="h-11 rounded-xl border-amber-500/30 bg-amber-500/10 px-4 text-xs font-semibold text-amber-300 hover:bg-amber-500/20"
+                      >
+                        Request Refund
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
+
+            {/* Plan Switching Restriction Notice (Monthly <-> Yearly) */}
+            {isPro && showSwitchInfo && (
+              <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-xs leading-relaxed text-blue-200">
+                <p className="font-semibold text-white">
+                  Switching to {isYearly ? "Pro Monthly ($19/mo)" : "Pro Yearly ($182.40/yr)"}
+                </p>
+                <p className="mt-1">
+                  Your current <strong>{isYearly ? "Pro Yearly" : "Pro Monthly"}</strong>{" "}
+                  subscription is still active until{" "}
+                  <strong className="text-white">
+                    {formatFullDateTime(expirationDate)}
+                  </strong>
+                  . You will not be charged for the new plan now, and your plan will not
+                  switch automatically. Once your current subscription expires, you can
+                  manually select and purchase{" "}
+                  <strong>{isYearly ? "Pro Monthly" : "Pro Yearly"}</strong> from checkout.
+                </p>
+              </div>
+            )}
+
+            {/* Cancel Confirmation Prompt */}
+            {isPro && confirmingCancel && !isCanceledPending && (
+              <div className="mt-5 flex flex-col gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs text-red-200 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-red-300">
+                    Confirm Subscription Cancellation
+                  </p>
+                  <p className="mt-1 leading-relaxed">
+                    Canceling stops future renewals so you won&apos;t be charged again.
+                    You will keep your Pro benefits until{" "}
+                    <strong className="text-white">
+                      {formatFullDateTime(expirationDate)}
+                    </strong>
+                    , after which your account will downgrade to Free.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setConfirmingCancel(false)}
+                    disabled={pendingAction !== null}
+                    className="border-white/10 bg-white/5 text-xs text-white hover:bg-white/10"
+                  >
+                    Keep Plan
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleCancelSubscription}
+                    disabled={pendingAction !== null}
+                    className="bg-red-600 text-xs font-semibold text-white hover:bg-red-500"
+                  >
+                    {pendingAction === "cancel"
+                      ? "Canceling..."
+                      : "Confirm Cancellation"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Refund / Contact Authority Information */}
+            {showRefundInfo && (
+              <div className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs leading-relaxed text-amber-200">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1.5">
+                    <p className="font-semibold text-amber-300">
+                      Manual Refund & Authority Review Required
+                    </p>
+                    <p>
+                      Refunds are <strong>not processed automatically</strong>. Clicking
+                      Request Refund does not issue a refund or immediately cancel your
+                      subscription.
+                    </p>
+                    <p>
+                      To request a refund or cancellation review, please contact the
+                      responsible HireLoop administration / support authority directly.
+                      The authority will review your request and handle refund eligibility
+                      and subscription cancellation as appropriate.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowRefundInfo(false)}
+                    className="shrink-0 text-[11px] font-medium text-amber-300 hover:underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Free Tier Usage Tracker */}
             {!isPro && (

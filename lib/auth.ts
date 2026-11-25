@@ -8,7 +8,7 @@ import { isPasswordValid } from "./password-policy"
 import { isPublicSignupRole } from "./roles"
 
 const client = new MongoClient(`${process.env.MONGODB_CLIENT}`)
-const db = client.db(process.env.MONGODB_NAME)
+export const db = client.db(process.env.MONGODB_NAME)
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL as string,

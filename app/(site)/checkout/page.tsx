@@ -3,6 +3,7 @@ import Link from "next/link"
 import { AlertCircle } from "lucide-react"
 
 import { getSession } from "@/lib/session"
+import { getValidatedUserSubscription } from "@/lib/subscription-server"
 import { CheckoutForm } from "@/components/checkout/checkout-form"
 
 export const metadata: Metadata = {
@@ -19,9 +20,10 @@ export default async function CheckoutPage({
   const { canceled, error, interval } = await searchParams
   const session = await getSession()
   const user = session?.user ?? null
-  const isSubscribed =
-    (user as unknown as { subscription?: { plan?: string; status?: string } })
-      ?.subscription?.plan === "pro"
+  const activeSubscription = user
+    ? await getValidatedUserSubscription(user.id)
+    : null
+  const isSubscribed = Boolean(activeSubscription?.isActivePro)
 
   const initialInterval = interval === "yearly" ? "yearly" : "monthly"
 
@@ -79,6 +81,7 @@ export default async function CheckoutPage({
           userRole={user?.role}
           initialInterval={initialInterval}
           isSubscribed={isSubscribed}
+          activeSubscription={activeSubscription}
         />
       </main>
     </div>

@@ -1,24 +1,48 @@
 "use client"
 
 import { useState } from "react"
-import { Check, CreditCard, Lock, Sparkles } from "lucide-react"
+import Link from "next/link"
+import { AlertCircle, Check, CreditCard, Lock, Sparkles } from "lucide-react"
+
+import type { ValidatedSubscription } from "@/lib/subscription-server"
 
 interface CheckoutFormProps {
   userRole?: string | null
   initialInterval?: "monthly" | "yearly"
   isSubscribed?: boolean
+  activeSubscription?: ValidatedSubscription | null
 }
 
 export function CheckoutForm({
   userRole = "seeker",
   initialInterval = "monthly",
   isSubscribed = false,
+  activeSubscription = null,
 }: CheckoutFormProps) {
   const [interval, setInterval] = useState<"monthly" | "yearly">(initialInterval)
   const [submitting, setSubmitting] = useState(false)
 
   const isYearly = interval === "yearly"
   const isRecruiter = userRole === "recruiter"
+  const hasActivePro = Boolean(activeSubscription?.isActivePro ?? isSubscribed)
+  const currentInterval =
+    activeSubscription?.billingInterval === "yearly" ? "yearly" : "monthly"
+  const isSwitchingPlan = hasActivePro && interval !== currentInterval
+
+  const currentPlanLabel =
+    currentInterval === "yearly" ? "Pro Yearly" : "Pro Monthly"
+  const targetPlanLabel = isYearly ? "Pro Yearly" : "Pro Monthly"
+  const expirationFormatted = activeSubscription?.currentPeriodEnd
+    ? new Date(activeSubscription.currentPeriodEnd).toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      })
+    : null
+
+  const billingManageHref = isRecruiter
+    ? "/dashboard/recruiter/settings"
+    : "/dashboard/seeker/billing"
 
   const planName = isYearly ? "Hireloop Pro (Yearly)" : "Hireloop Pro (Monthly)"
   const planPrice = isYearly ? "$182.40" : "$19.00"
@@ -189,6 +213,54 @@ export function CheckoutForm({
           </div>
         </div>
 
+        {/* Active subscription / plan switching restriction notice */}
+        {hasActivePro && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs leading-relaxed text-amber-200 sm:text-sm">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-400" />
+              <div className="space-y-1.5">
+                <p className="font-semibold text-amber-300">
+                  {isSwitchingPlan
+                    ? `Active ${currentPlanLabel} Subscription`
+                    : `You Already Have an Active ${currentPlanLabel} Plan`}
+                </p>
+                <p>
+                  {isSwitchingPlan ? (
+                    <>
+                      Your <strong>{currentPlanLabel}</strong> subscription is still active
+                      {expirationFormatted ? (
+                        <>
+                          {" "}until <strong className="text-white">{expirationFormatted}</strong>
+                        </>
+                      ) : null}
+                      . You will not be charged now and your plan will not switch automatically. You
+                      can purchase <strong>{targetPlanLabel}</strong> manually after your current
+                      subscription expires.
+                    </>
+                  ) : (
+                    <>
+                      You already have an active <strong>{currentPlanLabel}</strong> subscription
+                      {expirationFormatted ? (
+                        <>
+                          {" "}until <strong className="text-white">{expirationFormatted}</strong>
+                        </>
+                      ) : null}
+                      . You must wait until your current subscription expires before purchasing
+                      another plan.
+                    </>
+                  )}
+                </p>
+                <Link
+                  href={billingManageHref}
+                  className="inline-block font-semibold text-[#60a5fa] hover:underline"
+                >
+                  Manage subscription in Billing →
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Action Button */}
         <div>
           <form
@@ -200,13 +272,15 @@ export function CheckoutForm({
 
             <button
               type="submit"
-              disabled={submitting || isSubscribed}
+              disabled={submitting || hasActivePro}
               className="h-14 w-full rounded-xl bg-[#0070E0] text-sm font-bold text-white shadow-[0_4px_6px_-4px_rgba(94,158,246,0.3),0_10px_15px_-3px_rgba(94,158,246,0.3)] transition-colors hover:bg-[#3F90E5] disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
             >
               {submitting
                 ? "Connecting to Stripe..."
-                : isSubscribed
-                  ? "Already on Pro Plan"
+                : hasActivePro
+                  ? isSwitchingPlan
+                    ? `Available After ${expirationFormatted || "Expiration"}`
+                    : `Active ${currentPlanLabel} Plan`
                   : `Proceed to Checkout · ${planPrice}`}
             </button>
           </form>
