@@ -12,12 +12,14 @@ import {
 } from "@/components/dashboard/seeker/settings/form-styles"
 import { EducationTab } from "@/components/dashboard/seeker/settings/professional/education-tab"
 import { ExperienceTab } from "@/components/dashboard/seeker/settings/professional/experience-tab"
+import { LanguagesTab } from "@/components/dashboard/seeker/settings/professional/languages-tab"
 import { ProfessionalLinksTab } from "@/components/dashboard/seeker/settings/professional/professional-links-tab"
 import { ProjectsTab } from "@/components/dashboard/seeker/settings/professional/projects-tab"
 import { SkillsInput } from "@/components/dashboard/seeker/settings/professional/skills-input"
 import type {
   EducationEntry,
   ExperienceEntry,
+  LanguageEntry,
   ProfessionalLinks,
   ProfessionalProfile,
   ProjectEntry,
@@ -28,7 +30,7 @@ import { Separator } from "@/components/ui/separator"
 import { saveProfessionalProfile } from "@/lib/profile-api"
 import { cn } from "@/lib/utils"
 
-type SubTab = "experience" | "education" | "projects" | "links"
+type SubTab = "experience" | "education" | "projects" | "languages" | "links"
 
 type ProfessionalDetailsSectionProps = {
   initialProfile: ProfessionalProfile
@@ -51,6 +53,9 @@ export function ProfessionalDetailsSection({
   const [projects, setProjects] = useState<ProjectEntry[]>(
     initialProfile.projects
   )
+  const [languages, setLanguages] = useState<LanguageEntry[]>(
+    initialProfile.languages ?? []
+  )
   const [links, setLinks] = useState<ProfessionalLinks>(initialProfile.links)
 
   const [activeTab, setActiveTab] = useState<SubTab>("experience")
@@ -66,6 +71,7 @@ export function ProfessionalDetailsSection({
       experience: experiences,
       education: educations,
       projects,
+      languages,
       links: {
         portfolioUrl: links.portfolioUrl.trim(),
         linkedinUrl: links.linkedinUrl.trim(),
@@ -130,6 +136,11 @@ export function ProfessionalDetailsSection({
       id: "projects",
       label: "Projects",
       count: projects.length,
+    },
+    {
+      id: "languages",
+      label: "Languages",
+      count: languages.length,
     },
     {
       id: "links",
@@ -248,6 +259,21 @@ export function ProfessionalDetailsSection({
                 message
               )
               if (ok) setProjects(nextList)
+              return ok
+            }}
+          />
+        )}
+
+        {activeTab === "languages" && (
+          <LanguagesTab
+            languages={languages}
+            saving={saving}
+            onPersistList={async (nextList, message) => {
+              const ok = await persistProfile(
+                buildPayload({ languages: nextList }),
+                message
+              )
+              if (ok) setLanguages(nextList)
               return ok
             }}
           />

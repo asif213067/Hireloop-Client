@@ -28,6 +28,14 @@ export type ProjectEntry = {
   url: string
 }
 
+export type LanguageProficiency = "Native" | "Intermediate" | "Professional"
+
+export type LanguageEntry = {
+  id: string
+  name: string
+  proficiency: LanguageProficiency
+}
+
 export type ProfessionalLinks = {
   portfolioUrl: string
   linkedinUrl: string
@@ -42,5 +50,6 @@ export type ProfessionalProfile = {
   experience: ExperienceEntry[]
   education: EducationEntry[]
   projects: ProjectEntry[]
+  languages: LanguageEntry[]
   links: ProfessionalLinks
 }

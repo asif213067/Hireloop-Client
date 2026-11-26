@@ -7,6 +7,7 @@ import { ProfileAbout } from "@/components/profile/profile-about"
 import { ProfileEducation } from "@/components/profile/profile-education"
 import { ProfileExperience } from "@/components/profile/profile-experience"
 import { ProfileHeader } from "@/components/profile/profile-header"
+import { ProfileLanguages } from "@/components/profile/profile-languages"
 import { ProfileLinks } from "@/components/profile/profile-links"
 import { ProfileProjects } from "@/components/profile/profile-projects"
 import { ProfileResume } from "@/components/profile/profile-resume"
@@ -102,6 +103,7 @@ export default async function PublicSeekerProfilePage({
 
         <aside className="space-y-6 lg:sticky lg:top-20">
           <ProfileSkills skills={profile.skills} />
+          <ProfileLanguages languages={profile.languages} />
           <ProfileLinks links={profile.links} />
           <ProfileResume resume={profile.resume} variant="card" />
         </aside>

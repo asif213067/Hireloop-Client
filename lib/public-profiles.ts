@@ -1,6 +1,7 @@
 import type {
   EducationEntry,
   ExperienceEntry,
+  LanguageEntry,
   ProfessionalLinks,
   ProjectEntry,
 } from "@/components/dashboard/seeker/settings/types"
@@ -22,6 +23,7 @@ export type PublicSeekerProfile = {
   experience: ExperienceEntry[]
   education: EducationEntry[]
   projects: ProjectEntry[]
+  languages: LanguageEntry[]
   links: ProfessionalLinks
   resume: PublicSeekerResume | null
 }

@@ -110,6 +110,7 @@ export function SeekerSettingsView({
                   experience: profile.experience,
                   education: profile.education,
                   projects: profile.projects,
+                  languages: profile.languages ?? [],
                   links: profile.links,
                 }}
                 onSaved={(next) =>
