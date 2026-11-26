@@ -9,6 +9,7 @@ export type RecruiterApplication = {
   applicantId: string
   applicantName: string
   applicantEmail: string
+  applicantImage: string | null
   status: ApplicationStatus
   createdAt: string
   updatedAt: string
